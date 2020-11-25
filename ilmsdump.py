@@ -1,9 +1,13 @@
+import os
 import asyncio
+import getpass
+
 import aiohttp
 import yarl
 import lxml.html
 
 
+DOMAIN = 'lms.nthu.edu.tw'
 LOGIN_URL = 'https://lms.nthu.edu.tw/sys/lib/ajax/login_submit.php'
 LOGIN_STATE_URL = 'http://lms.nthu.edu.tw/home.php'
 
@@ -16,7 +20,34 @@ class ILMSClient:
     def __init__(self, session: aiohttp.ClientSession):
         self.session = session
 
+        self.data_dir = os.path.abspath('ilmsdump.d')
+        os.makedirs(self.data_dir, exist_ok=True)
+
     log = staticmethod(print)
+
+    async def ensure_authenticated(self):
+        cred_path = os.path.join(self.data_dir, 'credentials.txt')
+        try:
+            cred_file = open(cred_path)
+        except FileNotFoundError:
+            await self.interactive_login()
+            with open(cred_path, 'w') as file:
+                print(self.session.cookie_jar.filter_cookies(LOGIN_STATE_URL)['PHPSESSID'].value, file=file)
+            self.log('Saved credentials to', cred_path)
+        else:
+            with cred_file:
+                self.log('Using existing credentials in', cred_path)
+                phpsessid = cred_file.read().strip()
+                await self.login_with_phpsessid(phpsessid)
+
+    async def interactive_login(self):
+        username = input('iLMS username (leave empty to login with PHPSESSID): ')
+        if username:
+            password = getpass.getpass('iLMS password: ')
+            await self.login_with_username_and_password(username, password)
+        else:
+            phpsessid = getpass.getpass('iLMS PHPSESSID: ')
+            await self.login_with_phpsessid(phpsessid)
 
     async def login_with_username_and_password(self, username, password):
         login = self.session.get(
@@ -36,7 +67,7 @@ class ILMSClient:
     async def login_with_phpsessid(self, phpsessid):
         self.session.cookie_jar.update_cookies(
             {'PHPSESSID': phpsessid},
-            response_url=yarl.URL('lms.nthu.edu.tw'),
+            response_url=yarl.URL(DOMAIN),
         )
         name = await self.get_login_state()
         if name is not None:
@@ -61,7 +92,7 @@ class ILMSClient:
 async def main():
     async with aiohttp.ClientSession() as session:
         client = ILMSClient(session)
-        await client.login_with_phpsessid(input())
+        await client.ensure_authenticated()
 
 
 asyncio.run(main())
