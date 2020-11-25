@@ -27,7 +27,7 @@ class CannotUnderstand(Exception):
 
 @dataclasses.dataclass
 class Course:
-    id: str
+    id: int
     name: str
     is_admin: bool
 
