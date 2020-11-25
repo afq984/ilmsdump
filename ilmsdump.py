@@ -1,6 +1,10 @@
 import os
+import re
 import asyncio
 import getpass
+import dataclasses
+
+from typing import List
 
 import aiohttp
 import yarl
@@ -10,10 +14,22 @@ import lxml.html
 DOMAIN = 'lms.nthu.edu.tw'
 LOGIN_URL = 'https://lms.nthu.edu.tw/sys/lib/ajax/login_submit.php'
 LOGIN_STATE_URL = 'http://lms.nthu.edu.tw/home.php'
+COURSE_LIST_URL = 'http://lms.nthu.edu.tw/home.php?f=allcourse'
 
 
 class LoginFailed(Exception):
     pass
+
+
+class CannotUnderstand(Exception):
+    pass
+
+
+@dataclasses.dataclass
+class Course:
+    id: str
+    name: str
+    is_admin: bool
 
 
 class ILMSClient:
@@ -94,10 +110,35 @@ class ILMSClient:
             assert name_node
             return ''.join(name_node).strip()
 
+    async def get_courses(self) -> List[Course]:
+        courses = []
+        async with self.session.get(COURSE_LIST_URL) as response:
+            response.raise_for_status()
+            body = await response.read()
+            html = lxml.html.fromstring(body)
+
+            for a in html.xpath('//td[@class="listTD"]/a'):
+                bs = a.xpath('b')
+                if bs:
+                    is_admin = True
+                    tag, = bs
+                else:
+                    is_admin = False
+                    tag = a
+
+                name = tag.text
+
+                m = re.match(r'/course/(\d+)', a.attrib['href'])
+                if m is None:
+                    raise CannotUnderstand('course URL', a.attrib['href'])
+                courses.append(Course(id=int(m.group(1)), name=name, is_admin=is_admin))
+        return courses
+
 
 async def main():
     async with ILMSClient() as client:
         await client.ensure_authenticated()
+        print(await client.get_courses())
 
 
 asyncio.run(main())
