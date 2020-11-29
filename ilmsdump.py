@@ -1,5 +1,7 @@
 import os
 import re
+import itertools
+import urllib.parse
 import asyncio
 import getpass
 import dataclasses
@@ -36,6 +38,12 @@ class Course:
 class Discussion:
     id: int
     course: Course
+
+
+def qs_get(url: str, key: str) -> str:
+    purl = urllib.parse.urlparse(url)
+    query = urllib.parse.parse_qs(purl.query)
+    return query[key][0]
 
 
 async def response_ok_as_html(response: aiohttp.ClientResponse):
@@ -142,19 +150,25 @@ class ILMSClient:
         return courses
 
     async def get_discussions(self, course: Course) -> Iterable[Discussion]:
-        page = 1
-        async with self.session.get(
-            'http://lms.nthu.edu.tw/course.php',
-            params={
-                'courseID': course.id,
-                'f': 'forumlist',
-                'page': page,
-            },
-        ) as response:
-            html = await response_ok_as_html(response)
+        for page in itertools.count(1):
+            async with self.session.get(
+                'http://lms.nthu.edu.tw/course.php',
+                params={
+                    'courseID': course.id,
+                    'f': 'forumlist',
+                    'page': page,
+                },
+            ) as response:
+                html = await response_ok_as_html(response)
 
-            for tid in html.xpath('//*[@id="main"]/div[2]/table/tr[@class!="header"]/td[1]/a/text()'):
-                yield Discussion(id=int(tid), course=course)
+                for tid in html.xpath('//*[@id="main"]/div[2]/table/tr[@class!="header"]/td[1]/a/text()'):
+                    yield Discussion(id=int(tid), course=course)
+
+                next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
+                if not next_hrefs:
+                    break
+                next_page = int(qs_get(next_hrefs[0], 'page'))
+                assert page + 1 == next_page
 
 
 async def amain():
