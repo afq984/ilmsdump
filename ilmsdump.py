@@ -44,19 +44,19 @@ class Announcement:
 
 
 @dataclasses.dataclass
-class Discussion:
-    """討論區"""
-    id: int
-    title: str
-    course: Course
-
-
-@dataclasses.dataclass
 class Material:
     """上課教材"""
     id: int
     title: str
     type: str
+    course: Course
+
+
+@dataclasses.dataclass
+class Discussion:
+    """討論區"""
+    id: int
+    title: str
     course: Course
 
 
@@ -213,6 +213,16 @@ class ILMSClient:
                     course=course,
                 )
 
+    async def get_materials(self, course: Course) -> Iterable[Material]:
+        async for html in self._paginate_course_item(course, 'doclist'):
+            for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a'):
+                yield Material(
+                    id=int(qs_get(a.attrib['href'], 'cid')),
+                    title=a.text,
+                    type=a.getparent().attrib['class'],
+                    course=course,
+                )
+
     async def get_discussions(self, course: Course) -> Iterable[Discussion]:
         async for html in self._paginate_course_item(course, 'forumlist'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
@@ -221,16 +231,6 @@ class ILMSClient:
                 yield Discussion(
                     id=int(qs_get(href, 'tid')),
                     title=title,
-                    course=course,
-                )
-
-    async def get_materials(self, course: Course) -> Iterable[Material]:
-        async for html in self._paginate_course_item(course, 'doclist'):
-            for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a'):
-                yield Material(
-                    id=int(qs_get(a.attrib['href'], 'cid')),
-                    title=a.text,
-                    type=a.getparent().attrib['class'],
                     course=course,
                 )
 
