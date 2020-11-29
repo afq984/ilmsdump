@@ -50,6 +50,7 @@ class Material:
 @dataclasses.dataclass
 class Homework:
     id: int
+    title: str
     course: Course
 
 
@@ -199,8 +200,12 @@ class ILMSClient:
 
     async def get_homeworks(self, course: Course) -> Iterable[Homework]:
         async for html in self._paginate_course_item(course, 'hwlist'):
-            for href in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/a[1]/@href'):
-                yield Homework(id=int(qs_get(href, 'hw')), course=course)
+            for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/a[1]'):
+                yield Homework(
+                    id=int(qs_get(a.attrib['href'], 'hw')),
+                    title=a.text,
+                    course=course,
+                )
 
 
 async def amain():
@@ -212,7 +217,7 @@ async def amain():
             print(discussion)
         async for material in client.get_materials(courses[5]):
             print(material)
-        async for homework in client.get_homeworks(courses[-1]):
+        async for homework in client.get_homeworks(courses[-2]):
             print(homework)
 
 
