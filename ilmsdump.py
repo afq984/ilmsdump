@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import os
 import re
+import functools
 import itertools
 import urllib.parse
 import asyncio
@@ -26,6 +27,15 @@ class LoginFailed(Exception):
 
 class CannotUnderstand(Exception):
     pass
+
+
+def as_sync(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(
+            func(*args, **kwargs)
+        )
+    return wrapper
 
 
 def qs_get(url: str, key: str) -> str:
@@ -249,7 +259,8 @@ class Homework:
     course: Course
 
 
-async def amain():
+@as_sync
+async def main():
     async with ILMSClient() as client:
         await client.ensure_authenticated()
         courses = [x async for x in client.get_courses()]
@@ -262,10 +273,6 @@ async def amain():
             print(material)
         async for homework in courses[-2].get_homeworks():
             print(homework)
-
-
-def main():
-    asyncio.run(amain())
 
 
 if __name__ == '__main__':
