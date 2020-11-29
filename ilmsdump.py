@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 import re
 import itertools
@@ -40,10 +41,19 @@ class Discussion:
     course: Course
 
 
+@dataclasses.dataclass
+class Material:
+    id: int
+    course: Course
+
+
 def qs_get(url: str, key: str) -> str:
     purl = urllib.parse.urlparse(url)
     query = urllib.parse.parse_qs(purl.query)
-    return query[key][0]
+    try:
+        return query[key][0]
+    except KeyError:
+        raise KeyError(key, url) from None
 
 
 async def response_ok_as_html(response: aiohttp.ClientResponse):
@@ -170,6 +180,27 @@ class ILMSClient:
                 next_page = int(qs_get(next_hrefs[0], 'page'))
                 assert page + 1 == next_page
 
+    async def get_materials(self, course: Course) -> Iterable[Material]:
+        for page in itertools.count(1):
+            async with self.session.get(
+                'http://lms.nthu.edu.tw/course.php',
+                params={
+                    'courseID': course.id,
+                    'f': 'doclist',
+                    'page': page,
+                }
+            ) as response:
+                html = await response_ok_as_html(response)
+
+                for href in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a/@href'):
+                    yield Material(id=int(qs_get(href, 'cid')), course=course)
+
+                next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
+                if not next_hrefs:
+                    break
+                next_page = int(qs_get(next_hrefs[0], 'page'))
+                assert page + 1 == next_page
+
 
 async def amain():
     async with ILMSClient() as client:
@@ -178,6 +209,8 @@ async def amain():
         print(courses)
         async for discussion in client.get_discussions(courses[1]):
             print(discussion)
+        async for material in client.get_materials(courses[5]):
+            print(material)
 
 
 def main():
