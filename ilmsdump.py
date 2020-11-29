@@ -36,6 +36,14 @@ class Course:
 
 
 @dataclasses.dataclass
+class Announcement:
+    """課程活動(公告)"""
+    id: int
+    title: str
+    course: Course
+
+
+@dataclasses.dataclass
 class Discussion:
     """討論區"""
     id: int
@@ -194,6 +202,17 @@ class ILMSClient:
             },
         )
 
+    async def get_announcements(self, course: Course) -> Iterable[Announcement]:
+        async for html in self._paginate_course_item(course, 'news'):
+            for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
+                href, = tr.xpath('td[1]/a/@href')
+                title, = tr.xpath('td[2]//a/text()')
+                yield Announcement(
+                    id=int(qs_get(href, 'newsID')),
+                    title=title,
+                    course=course,
+                )
+
     async def get_discussions(self, course: Course) -> Iterable[Discussion]:
         async for html in self._paginate_course_item(course, 'forumlist'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
@@ -230,6 +249,8 @@ async def amain():
         await client.ensure_authenticated()
         courses = await client.get_courses()
         print(courses)
+        async for announcement in client.get_announcements(courses[5]):
+            print(announcement)
         async for discussion in client.get_discussions(courses[1]):
             print(discussion)
         async for material in client.get_materials(courses[5]):
