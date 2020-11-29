@@ -47,6 +47,12 @@ class Material:
     course: Course
 
 
+@dataclasses.dataclass
+class Homework:
+    id: int
+    course: Course
+
+
 def qs_get(url: str, key: str) -> str:
     purl = urllib.parse.urlparse(url)
     query = urllib.parse.parse_qs(purl.query)
@@ -191,6 +197,11 @@ class ILMSClient:
             for href in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a/@href'):
                 yield Material(id=int(qs_get(href, 'cid')), course=course)
 
+    async def get_homeworks(self, course: Course) -> Iterable[Homework]:
+        async for html in self._paginate_course_item(course, 'hwlist'):
+            for href in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/a[1]/@href'):
+                yield Homework(id=int(qs_get(href, 'hw')), course=course)
+
 
 async def amain():
     async with ILMSClient() as client:
@@ -201,6 +212,8 @@ async def amain():
             print(discussion)
         async for material in client.get_materials(courses[5]):
             print(material)
+        async for homework in client.get_homeworks(courses[-1]):
+            print(homework)
 
 
 def main():
