@@ -135,11 +135,15 @@ class ILMSClient:
         return courses
 
 
-async def main():
+async def amain():
     async with ILMSClient() as client:
         await client.ensure_authenticated()
         print(await client.get_courses())
 
 
+def main():
+    asyncio.run(amain())
+
+
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
