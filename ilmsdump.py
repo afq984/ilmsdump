@@ -159,8 +159,7 @@ class ILMSClient:
             assert name_node
             return ''.join(name_node).strip()
 
-    async def get_courses(self) -> List[Course]:
-        courses = []
+    async def get_courses(self) -> Iterable[Course]:
         async with self.session.get(COURSE_LIST_URL) as response:
             html = await response_ok_as_html(response)
 
@@ -178,8 +177,7 @@ class ILMSClient:
                 m = re.match(r'/course/(\d+)', a.attrib['href'])
                 if m is None:
                     raise CannotUnderstand('course URL', a.attrib['href'])
-                courses.append(Course(id=int(m.group(1)), name=name, is_admin=is_admin))
-        return courses
+                yield Course(id=int(m.group(1)), name=name, is_admin=is_admin)
 
     async def _paginate_responses(self, url, params, page=1):
         for page in itertools.count(page):
@@ -248,7 +246,7 @@ class ILMSClient:
 async def amain():
     async with ILMSClient() as client:
         await client.ensure_authenticated()
-        courses = await client.get_courses()
+        courses = [x async for x in client.get_courses()]
         print(courses)
         async for announcement in client.get_announcements(courses[5]):
             print(announcement)
