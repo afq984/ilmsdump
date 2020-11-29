@@ -28,47 +28,6 @@ class CannotUnderstand(Exception):
     pass
 
 
-@dataclasses.dataclass
-class Course:
-    """歷年課程檔案"""
-    id: int
-    name: str
-    is_admin: bool
-
-
-@dataclasses.dataclass
-class Announcement:
-    """課程活動(公告)"""
-    id: int
-    title: str
-    course: Course
-
-
-@dataclasses.dataclass
-class Material:
-    """上課教材"""
-    id: int
-    title: str
-    type: str
-    course: Course
-
-
-@dataclasses.dataclass
-class Discussion:
-    """討論區"""
-    id: int
-    title: str
-    course: Course
-
-
-@dataclasses.dataclass
-class Homework:
-    """作業"""
-    id: int
-    title: str
-    course: Course
-
-
 def qs_get(url: str, key: str) -> str:
     purl = urllib.parse.urlparse(url)
     query = urllib.parse.parse_qs(purl.query)
@@ -159,7 +118,7 @@ class ILMSClient:
             assert name_node
             return ''.join(name_node).strip()
 
-    async def get_courses(self) -> Iterable[Course]:
+    async def get_courses(self) -> Iterable['Course']:
         async with self.session.get(COURSE_LIST_URL) as response:
             html = await response_ok_as_html(response)
 
@@ -177,9 +136,14 @@ class ILMSClient:
                 m = re.match(r'/course/(\d+)', a.attrib['href'])
                 if m is None:
                     raise CannotUnderstand('course URL', a.attrib['href'])
-                yield Course(id=int(m.group(1)), name=name, is_admin=is_admin)
+                yield Course(
+                    id=int(m.group(1)),
+                    name=name,
+                    is_admin=is_admin,
+                    client=self,
+                )
 
-    async def _paginate_responses(self, url, params, page=1):
+    async def _response_paginator(self, url, params, page=1):
         for page in itertools.count(page):
             params['page'] = page
             async with self.session.get(url, params=params) as response:
@@ -192,55 +156,97 @@ class ILMSClient:
                 next_page = int(qs_get(next_hrefs[0], 'page'))
                 assert page + 1 == next_page
 
-    def _paginate_course_item(self, course, f):
-        return self._paginate_responses(
+
+@dataclasses.dataclass
+class Course:
+    """歷年課程檔案"""
+    id: int
+    name: str
+    is_admin: bool
+    client: ILMSClient
+
+    def _item_paginator(self, f):
+        return self.client._response_paginator(
             'http://lms.nthu.edu.tw/course.php',
             params={
-                'courseID': course.id,
+                'courseID': self.id,
                 'f': f,
             },
         )
 
-    async def get_announcements(self, course: Course) -> Iterable[Announcement]:
-        async for html in self._paginate_course_item(course, 'news'):
+    async def get_announcements(self) -> Iterable['Announcement']:
+        async for html in self._item_paginator('news'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
                 href, = tr.xpath('td[1]/a/@href')
                 title, = tr.xpath('td[2]//a/text()')
                 yield Announcement(
                     id=int(qs_get(href, 'newsID')),
                     title=title,
-                    course=course,
+                    course=self,
                 )
 
-    async def get_materials(self, course: Course) -> Iterable[Material]:
-        async for html in self._paginate_course_item(course, 'doclist'):
+    async def get_materials(self) -> Iterable['Material']:
+        async for html in self._item_paginator('doclist'):
             for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a'):
                 yield Material(
                     id=int(qs_get(a.attrib['href'], 'cid')),
                     title=a.text,
                     type=a.getparent().attrib['class'],
-                    course=course,
+                    course=self,
                 )
 
-    async def get_discussions(self, course: Course) -> Iterable[Discussion]:
-        async for html in self._paginate_course_item(course, 'forumlist'):
+    async def get_discussions(self) -> Iterable['Discussion']:
+        async for html in self._item_paginator('forumlist'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
                 href, = tr.xpath('td[1]/a/@href')
                 title, = tr.xpath('td[2]//a/span/text()')
                 yield Discussion(
                     id=int(qs_get(href, 'tid')),
                     title=title,
-                    course=course,
+                    course=self,
                 )
 
-    async def get_homeworks(self, course: Course) -> Iterable[Homework]:
-        async for html in self._paginate_course_item(course, 'hwlist'):
+    async def get_homeworks(self) -> Iterable['Homework']:
+        async for html in self._item_paginator('hwlist'):
             for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/a[1]'):
                 yield Homework(
                     id=int(qs_get(a.attrib['href'], 'hw')),
                     title=a.text,
-                    course=course,
+                    course=self,
                 )
+
+
+@dataclasses.dataclass
+class Announcement:
+    """課程活動(公告)"""
+    id: int
+    title: str
+    course: Course
+
+
+@dataclasses.dataclass
+class Material:
+    """上課教材"""
+    id: int
+    title: str
+    type: str
+    course: Course
+
+
+@dataclasses.dataclass
+class Discussion:
+    """討論區"""
+    id: int
+    title: str
+    course: Course
+
+
+@dataclasses.dataclass
+class Homework:
+    """作業"""
+    id: int
+    title: str
+    course: Course
 
 
 async def amain():
@@ -248,13 +254,13 @@ async def amain():
         await client.ensure_authenticated()
         courses = [x async for x in client.get_courses()]
         print(courses)
-        async for announcement in client.get_announcements(courses[5]):
+        async for announcement in courses[5].get_announcements():
             print(announcement)
-        async for discussion in client.get_discussions(courses[1]):
+        async for discussion in courses[1].get_discussions():
             print(discussion)
-        async for material in client.get_materials(courses[5]):
+        async for material in courses[5].get_materials():
             print(material)
-        async for homework in client.get_homeworks(courses[-2]):
+        async for homework in courses[-2].get_homeworks():
             print(homework)
 
 
