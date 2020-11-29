@@ -37,6 +37,7 @@ class Course:
 
 @dataclasses.dataclass
 class Discussion:
+    """討論區"""
     id: int
     title: str
     course: Course
@@ -44,6 +45,7 @@ class Discussion:
 
 @dataclasses.dataclass
 class Material:
+    """上課教材"""
     id: int
     title: str
     type: str
@@ -52,6 +54,7 @@ class Material:
 
 @dataclasses.dataclass
 class Homework:
+    """作業"""
     id: int
     title: str
     course: Course
