@@ -159,47 +159,37 @@ class ILMSClient:
                 courses.append(Course(id=int(m.group(1)), name=name, is_admin=is_admin))
         return courses
 
-    async def get_discussions(self, course: Course) -> Iterable[Discussion]:
-        for page in itertools.count(1):
-            async with self.session.get(
-                'http://lms.nthu.edu.tw/course.php',
-                params={
-                    'courseID': course.id,
-                    'f': 'forumlist',
-                    'page': page,
-                },
-            ) as response:
+    async def _paginate_responses(self, url, params, page=1):
+        for page in itertools.count(page):
+            params['page'] = page
+            async with self.session.get(url, params=params) as response:
                 html = await response_ok_as_html(response)
-
-                for href in html.xpath('//*[@id="main"]/div[2]/table/tr[@class!="header"]/td[1]/a/@href'):
-                    yield Discussion(id=int(qs_get(href, 'tid')), course=course)
+                yield html
 
                 next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
                 if not next_hrefs:
                     break
                 next_page = int(qs_get(next_hrefs[0], 'page'))
                 assert page + 1 == next_page
+
+    def _paginate_course_item(self, course, f):
+        return self._paginate_responses(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': course.id,
+                'f': f,
+            },
+        )
+
+    async def get_discussions(self, course: Course) -> Iterable[Discussion]:
+        async for html in self._paginate_course_item(course, 'forumlist'):
+            for href in html.xpath('//*[@id="main"]/div[2]/table/tr[@class!="header"]/td[1]/a/@href'):
+                yield Discussion(id=int(qs_get(href, 'tid')), course=course)
 
     async def get_materials(self, course: Course) -> Iterable[Material]:
-        for page in itertools.count(1):
-            async with self.session.get(
-                'http://lms.nthu.edu.tw/course.php',
-                params={
-                    'courseID': course.id,
-                    'f': 'doclist',
-                    'page': page,
-                }
-            ) as response:
-                html = await response_ok_as_html(response)
-
-                for href in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a/@href'):
-                    yield Material(id=int(qs_get(href, 'cid')), course=course)
-
-                next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
-                if not next_hrefs:
-                    break
-                next_page = int(qs_get(next_hrefs[0], 'page'))
-                assert page + 1 == next_page
+        async for html in self._paginate_course_item(course, 'doclist'):
+            for href in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a/@href'):
+                yield Material(id=int(qs_get(href, 'cid')), course=course)
 
 
 async def amain():
