@@ -161,8 +161,8 @@ class ILMSClient:
             ) as response:
                 html = await response_ok_as_html(response)
 
-                for tid in html.xpath('//*[@id="main"]/div[2]/table/tr[@class!="header"]/td[1]/a/text()'):
-                    yield Discussion(id=int(tid), course=course)
+                for href in html.xpath('//*[@id="main"]/div[2]/table/tr[@class!="header"]/td[1]/a/@href'):
+                    yield Discussion(id=int(qs_get(href, 'tid')), course=course)
 
                 next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
                 if not next_hrefs:
