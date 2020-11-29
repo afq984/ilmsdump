@@ -4,7 +4,7 @@ import asyncio
 import getpass
 import dataclasses
 
-from typing import List
+from typing import List, Iterable
 
 import aiohttp
 import yarl
@@ -30,6 +30,17 @@ class Course:
     id: str
     name: str
     is_admin: bool
+
+
+@dataclasses.dataclass
+class Discussion:
+    id: int
+    course: Course
+
+
+async def response_ok_as_html(response: aiohttp.ClientResponse):
+    response.raise_for_status()
+    return lxml.html.fromstring(await response.read())
 
 
 class ILMSClient:
@@ -99,9 +110,7 @@ class ILMSClient:
 
     async def get_login_state(self):
         async with self.session.get(LOGIN_STATE_URL) as response:
-            response.raise_for_status()
-            body = await response.read()
-            html = lxml.html.fromstring(body)
+            html = await response_ok_as_html(response)
 
             if not html.xpath('//*[@id="login"]'):
                 return None
@@ -113,9 +122,7 @@ class ILMSClient:
     async def get_courses(self) -> List[Course]:
         courses = []
         async with self.session.get(COURSE_LIST_URL) as response:
-            response.raise_for_status()
-            body = await response.read()
-            html = lxml.html.fromstring(body)
+            html = await response_ok_as_html(response)
 
             for a in html.xpath('//td[@class="listTD"]/a'):
                 bs = a.xpath('b')
@@ -134,11 +141,29 @@ class ILMSClient:
                 courses.append(Course(id=int(m.group(1)), name=name, is_admin=is_admin))
         return courses
 
+    async def get_discussions(self, course: Course) -> Iterable[Discussion]:
+        page = 1
+        async with self.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': course.id,
+                'f': 'forumlist',
+                'page': page,
+            },
+        ) as response:
+            html = await response_ok_as_html(response)
+
+            for tid in html.xpath('//*[@id="main"]/div[2]/table/tr[@class!="header"]/td[1]/a/text()'):
+                yield Discussion(id=int(tid), course=course)
+
 
 async def amain():
     async with ILMSClient() as client:
         await client.ensure_authenticated()
-        print(await client.get_courses())
+        courses = await client.get_courses()
+        print(courses)
+        async for discussion in client.get_discussions(courses[1]):
+            print(discussion)
 
 
 def main():
