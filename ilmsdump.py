@@ -30,6 +30,7 @@ class CannotUnderstand(Exception):
 
 @dataclasses.dataclass
 class Course:
+    """歷年課程檔案"""
     id: int
     name: str
     is_admin: bool
