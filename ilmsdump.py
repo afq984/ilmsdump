@@ -44,6 +44,8 @@ class Discussion:
 @dataclasses.dataclass
 class Material:
     id: int
+    title: str
+    type: str
     course: Course
 
 
@@ -195,8 +197,13 @@ class ILMSClient:
 
     async def get_materials(self, course: Course) -> Iterable[Material]:
         async for html in self._paginate_course_item(course, 'doclist'):
-            for href in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a/@href'):
-                yield Material(id=int(qs_get(href, 'cid')), course=course)
+            for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a'):
+                yield Material(
+                    id=int(qs_get(a.attrib['href'], 'cid')),
+                    title=a.text,
+                    type=a.getparent().attrib['class'],
+                    course=course,
+                )
 
     async def get_homeworks(self, course: Course) -> Iterable[Homework]:
         async for html in self._paginate_course_item(course, 'hwlist'):
