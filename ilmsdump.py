@@ -150,7 +150,6 @@ class ILMSClient:
                     id=int(m.group(1)),
                     name=name,
                     is_admin=is_admin,
-                    client=self,
                 )
 
     async def _response_paginator(self, url, params, page=1):
@@ -173,10 +172,9 @@ class Course:
     id: int
     name: str
     is_admin: bool
-    client: ILMSClient
 
-    def _item_paginator(self, f):
-        return self.client._response_paginator(
+    def _item_paginator(self, client, f):
+        return client._response_paginator(
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'courseID': self.id,
@@ -184,8 +182,8 @@ class Course:
             },
         )
 
-    async def get_announcements(self) -> Iterable['Announcement']:
-        async for html in self._item_paginator('news'):
+    async def get_announcements(self, client) -> Iterable['Announcement']:
+        async for html in self._item_paginator(client, 'news'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
                 href, = tr.xpath('td[1]/a/@href')
                 title, = tr.xpath('td[2]//a/text()')
@@ -195,8 +193,8 @@ class Course:
                     course=self,
                 )
 
-    async def get_materials(self) -> Iterable['Material']:
-        async for html in self._item_paginator('doclist'):
+    async def get_materials(self, client) -> Iterable['Material']:
+        async for html in self._item_paginator(client, 'doclist'):
             for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a'):
                 yield Material(
                     id=int(qs_get(a.attrib['href'], 'cid')),
@@ -205,8 +203,8 @@ class Course:
                     course=self,
                 )
 
-    async def get_discussions(self) -> Iterable['Discussion']:
-        async for html in self._item_paginator('forumlist'):
+    async def get_discussions(self, client) -> Iterable['Discussion']:
+        async for html in self._item_paginator(client, 'forumlist'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
                 href, = tr.xpath('td[1]/a/@href')
                 title, = tr.xpath('td[2]//a/span/text()')
@@ -216,8 +214,8 @@ class Course:
                     course=self,
                 )
 
-    async def get_homeworks(self) -> Iterable['Homework']:
-        async for html in self._item_paginator('hwlist'):
+    async def get_homeworks(self, client) -> Iterable['Homework']:
+        async for html in self._item_paginator(client, 'hwlist'):
             for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/a[1]'):
                 yield Homework(
                     id=int(qs_get(a.attrib['href'], 'hw')),
@@ -265,13 +263,13 @@ async def main():
         await client.ensure_authenticated()
         courses = [x async for x in client.get_courses()]
         print(courses)
-        async for announcement in courses[5].get_announcements():
+        async for announcement in courses[5].get_announcements(client):
             print(announcement)
-        async for discussion in courses[1].get_discussions():
+        async for discussion in courses[1].get_discussions(client):
             print(discussion)
-        async for material in courses[5].get_materials():
+        async for material in courses[5].get_materials(client):
             print(material)
-        async for homework in courses[-2].get_homeworks():
+        async for homework in courses[-2].get_homeworks(client):
             print(homework)
 
 
