@@ -8,7 +8,7 @@ import asyncio
 import getpass
 import dataclasses
 
-from typing import List, Iterable
+from typing import AsyncGenerator
 
 import aiohttp
 import yarl
@@ -128,7 +128,7 @@ class ILMSClient:
             assert name_node
             return ''.join(name_node).strip()
 
-    async def get_courses(self) -> Iterable['Course']:
+    async def get_courses(self) -> AsyncGenerator['Course', None]:
         async with self.session.get(COURSE_LIST_URL) as response:
             html = await response_ok_as_html(response)
 
@@ -182,7 +182,7 @@ class Course:
             },
         )
 
-    async def get_announcements(self, client) -> Iterable['Announcement']:
+    async def get_announcements(self, client) -> AsyncGenerator['Announcement', None]:
         async for html in self._item_paginator(client, 'news'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
                 href, = tr.xpath('td[1]/a/@href')
@@ -193,7 +193,7 @@ class Course:
                     course=self,
                 )
 
-    async def get_materials(self, client) -> Iterable['Material']:
+    async def get_materials(self, client) -> AsyncGenerator['Material', None]:
         async for html in self._item_paginator(client, 'doclist'):
             for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a'):
                 yield Material(
@@ -203,7 +203,7 @@ class Course:
                     course=self,
                 )
 
-    async def get_discussions(self, client) -> Iterable['Discussion']:
+    async def get_discussions(self, client) -> AsyncGenerator['Discussion', None]:
         async for html in self._item_paginator(client, 'forumlist'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
                 href, = tr.xpath('td[1]/a/@href')
@@ -214,7 +214,7 @@ class Course:
                     course=self,
                 )
 
-    async def get_homeworks(self, client) -> Iterable['Homework']:
+    async def get_homeworks(self, client) -> AsyncGenerator['Homework', None]:
         async for html in self._item_paginator(client, 'hwlist'):
             for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/a[1]'):
                 yield Homework(
