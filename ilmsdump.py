@@ -237,7 +237,8 @@ class Stat:
 
 
 class Downloader:
-    def __init__(self):
+    def __init__(self, client: Client):
+        self.client = client
         self.queue = asyncio.Queue()
         self.stats = collections.defaultdict(Stat)
 
@@ -259,7 +260,9 @@ class Downloader:
             self.queue.task_done()
 
     async def process(self, item: Downloadable):
-        pass
+        async for child in item.index(client=self.client):
+            self.enqueue(child)
+        await item.download(client=self.client)
 
     async def run(self):
         tasks = []
@@ -282,6 +285,17 @@ class Course(Downloadable):
     id: int
     name: str
     is_admin: bool
+
+    async def index(self, client):
+        generators = [
+            self.get_announcements(client),
+            self.get_materials(client),
+            self.get_discussions(client),
+            self.get_homeworks(client),
+        ]
+        for generator in generators:
+            async for item in generator:
+                yield item
 
     def _item_paginator(self, client, f):
         return client._response_paginator(
@@ -456,7 +470,7 @@ def validate_course_id(ctx, param, value: str):
 @as_sync
 async def main(course_ids, logout: bool, login: bool, output_dir: str):
     async with Client(data_dir=output_dir) as client:
-        d = Downloader()
+        d = Downloader(client=client)
         changed = False
         if logout:
             changed |= client.clear_credentials()
