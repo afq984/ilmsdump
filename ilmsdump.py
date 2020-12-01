@@ -239,11 +239,12 @@ class Stat:
 class Downloader:
     def __init__(self, client: Client):
         self.client = client
-        self.queue = asyncio.Queue()
+        self.iqueue = asyncio.Queue()
+        self.dqueue = asyncio.Queue()
         self.stats = collections.defaultdict(Stat)
 
     def enqueue(self, item: Downloadable):
-        self.queue.put_nowait(item)
+        self.iqueue.put_nowait(item)
         self.stats[item.__class__.__name__].total += 1
         self.report_progress()
 
@@ -251,13 +252,20 @@ class Downloader:
         progress_str = ' '.join(f'{k}[{v.completed}/{v.total}]' for (k, v) in self.stats.items())
         print('Progress:', progress_str, end='\r', file=sys.stderr)
 
-    async def worker(self):
+    async def indexer(self):
         while True:
-            item = await self.queue.get()
-            await self.process(item)
+            item = await self.iqueue.get()
+            async for child in item.index(client=self.client):
+                self.enqueue(child)
+            self.dqueue.put_nowait(item)
+            self.iqueue.task_done()
+
+    async def downloader(self):
+        while True:
+            item = await self.dqueue.get()
+            await item.download(client=self.client)
             self.stats[item.__class__.__name__].completed += 1
-            self.report_progress()
-            self.queue.task_done()
+            self.dqueue.task_done()
 
     async def process(self, item: Downloadable):
         async for child in item.index(client=self.client):
@@ -265,11 +273,13 @@ class Downloader:
         await item.download(client=self.client)
 
     async def run(self):
-        tasks = []
-        for i in range(4):
-            tasks.append(asyncio.create_task(self.worker()))
+        tasks = [
+            asyncio.create_task(self.indexer()),
+            asyncio.create_task(self.downloader()),
+        ]
 
-        await self.queue.join()
+        await self.iqueue.join()
+        await self.dqueue.join()
 
         self.report_progress()
         print(file=sys.stderr)
