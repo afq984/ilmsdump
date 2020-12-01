@@ -8,7 +8,7 @@ import asyncio
 import getpass
 import dataclasses
 
-from typing import AsyncGenerator
+from typing import List, Union, AsyncGenerator
 
 import aiohttp
 import yarl
@@ -140,11 +140,6 @@ class ILMSClient:
                 'f': 'hwlist',
             },
         ) as response:
-            if response.url.path == '/course_login.php':
-                raise UserError(
-                    f'No access to course: course_id={course_id}'
-                )
-
             body = await response.read()
             if not body:
                 raise UserError(
@@ -161,12 +156,16 @@ class ILMSClient:
             else:
                 is_admin = False
 
-            return Course(
+            course = Course(
                 id=course_id,
                 name=name,
                 is_admin=is_admin,
             )
 
+            if response.url.path == '/course_login.php':
+                raise UserError(f'No access to course: {course}')
+
+            return course
 
     async def get_courses(self) -> AsyncGenerator['Course', None]:
         async with self.session.get(COURSE_LIST_URL) as response:
@@ -307,14 +306,24 @@ def main():
     pass
 
 
+async def foreach_course(
+    client: ILMSClient, course_ids: List[Union[str, int]]
+) -> AsyncGenerator[Course, None]:
+    for course_id in course_ids:
+        if course_id == 'enrolled':
+            async for course in client.get_courses():
+                yield course
+        else:
+            yield await client.get_course(int(course_id))
+
+
 @main.command()
 @click.argument('course_ids', nargs=-1, required=True)
 @as_sync
 async def download(course_ids):
     async with ILMSClient() as client:
         await client.ensure_authenticated()
-        for course_id in course_ids:
-            course = await client.get_course(course_id)
+        async for course in foreach_course(client, course_ids):
             print(course)
 
 
