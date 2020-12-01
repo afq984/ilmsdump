@@ -13,6 +13,7 @@ from typing import AsyncGenerator
 import aiohttp
 import yarl
 import lxml.html
+import click
 
 
 DOMAIN = 'lms.nthu.edu.tw'
@@ -264,8 +265,15 @@ class Homework:
     course: Course
 
 
+@click.group()
+def main():
+    pass
+
+
+@main.command()
 @as_sync
-async def main():
+async def test():
+    """Testing command to be removed"""
     async with ILMSClient() as client:
         await client.ensure_authenticated()
         courses = [x async for x in client.get_courses()]

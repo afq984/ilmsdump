@@ -35,6 +35,7 @@ setup(
         'aiohttp[speedups]',
         'yarl',
         'lxml',
+        'click',
     ],
     entry_points={  # Optional
         'console_scripts': [
