@@ -354,7 +354,7 @@ async def foreach_course(
 
 
 def validate_course_id(ctx, param, value: str):
-    result = []
+    result: List[Union[str, int]] = []
     for course_id in value:
         if course_id == 'enrolled':
             result.append(course_id)
