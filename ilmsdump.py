@@ -14,6 +14,7 @@ import aiohttp
 import yarl
 import lxml.html
 import click
+import wcwidth
 
 
 DOMAIN = 'lms.nthu.edu.tw'
@@ -52,13 +53,15 @@ def qs_get(url: str, key: str) -> str:
 
 
 class ILMSClient:
-    def __init__(self):
+    def __init__(self, data_dir):
         self.session = aiohttp.ClientSession(
             raise_for_status=True,
         )
 
-        self.data_dir = os.path.abspath('ilmsdump.d')
+        self.data_dir = os.path.abspath(data_dir)
         os.makedirs(self.data_dir, exist_ok=True)
+
+        self.cred_path = os.path.join(self.data_dir, 'credentials.txt')
 
     async def __aenter__(self):
         return self
@@ -69,22 +72,34 @@ class ILMSClient:
     log = staticmethod(print)
 
     async def ensure_authenticated(self):
-        cred_path = os.path.join(self.data_dir, 'credentials.txt')
         try:
-            cred_file = open(cred_path)
+            cred_file = open(self.cred_path)
         except FileNotFoundError:
             await self.interactive_login()
-            with open(cred_path, 'w') as file:
+            with open(self.cred_path, 'w') as file:
                 print(
                     self.session.cookie_jar.filter_cookies(LOGIN_STATE_URL)['PHPSESSID'].value,
                     file=file,
                 )
-            self.log('Saved credentials to', cred_path)
+            self.log('Saved credentials to', self.cred_path)
         else:
             with cred_file:
-                self.log('Using existing credentials in', cred_path)
+                self.log('Using existing credentials in', self.cred_path)
                 phpsessid = cred_file.read().strip()
                 await self.login_with_phpsessid(phpsessid)
+
+    def clear_credentials(self):
+        """
+        Clear saved credentials. Returns true if something is actually removed. False otherwise.
+        """
+        try:
+            os.remove(self.cred_path)
+        except FileNotFoundError:
+            self.log('No credentials saved in', self.cred_path)
+            return False
+        else:
+            self.log('Removed saved credentials in', self.cred_path)
+            return True
 
     async def interactive_login(self):
         username = input('iLMS username (leave empty to login with PHPSESSID): ')
@@ -301,9 +316,30 @@ class Homework:
     course: Course
 
 
-@click.group()
-def main():
-    pass
+def generate_table(items):
+    fields = [field.name for field in dataclasses.fields(items[0])]
+    rows = [fields]
+    rows.extend(
+        [str(getattr(x := getattr(item, field), 'id', x)) for field in fields] for item in items
+    )
+    widths = [max(map(wcwidth.wcswidth, col)) for col in zip(*rows)]
+    for i, row in enumerate(rows):
+        for j, (width, cell) in enumerate(zip(widths, row)):
+            if j:
+                yield '  '
+            yield cell
+            yield ' ' * (width - wcwidth.wcswidth(cell))
+        yield '\n'
+        if i == 0:
+            for j, width in enumerate(widths):
+                if j:
+                    yield '  '
+                yield '-' * width
+            yield '\n'
+
+
+def print_table(items):
+    print(end=''.join(generate_table(items)))
 
 
 async def foreach_course(
@@ -317,32 +353,66 @@ async def foreach_course(
             yield await client.get_course(int(course_id))
 
 
-@main.command()
-@click.argument('course_ids', nargs=-1, required=True)
-@as_sync
-async def download(course_ids):
-    async with ILMSClient() as client:
-        await client.ensure_authenticated()
-        async for course in foreach_course(client, course_ids):
-            print(course)
+def validate_course_id(ctx, param, value: str):
+    result = []
+    for course_id in value:
+        if course_id == 'enrolled':
+            result.append(course_id)
+        elif not course_id.isdigit():
+            raise click.BadParameter('must be a number or the string "enrolled"')
+        else:
+            result.append(int(course_id))
+    return result
 
 
-@main.command()
+@click.command(
+    help="""
+        Dump the courses given by their ID.
+        The string "enrolled" can be used as a special ID to dump all courses
+        enrolled by the logged in user.
+        """,
+)
+@click.option(
+    '--logout',
+    is_flag=True,
+    help="""
+        Clear iLMS credentials.
+        If specified with --login, the credentials is cleared first, then login is performed
+    """,
+)
+@click.option(
+    '--login',
+    is_flag=True,
+    help='Login to iLMS interactively before performing accessing iLMS',
+)
+@click.option(
+    '-o',
+    '--output-dir',
+    metavar='DIR',
+    default='ilmsdump.d',
+    show_default=True,
+    help='Output directory to store login credentials and downloads',
+)
+@click.argument(
+    'course_ids',
+    nargs=-1,
+    callback=validate_course_id,
+)
 @as_sync
-async def test():
-    """Testing command to be removed"""
-    async with ILMSClient() as client:
-        await client.ensure_authenticated()
-        courses = [x async for x in client.get_courses()]
-        print(courses)
-        async for announcement in courses[5].get_announcements(client):
-            print(announcement)
-        async for discussion in courses[1].get_discussions(client):
-            print(discussion)
-        async for material in courses[5].get_materials(client):
-            print(material)
-        async for homework in courses[-2].get_homeworks(client):
-            print(homework)
+async def main(course_ids, logout: bool, login: bool, output_dir: str):
+    async with ILMSClient(data_dir=output_dir) as client:
+        changed = False
+        if logout:
+            changed |= client.clear_credentials()
+        if login:
+            await client.ensure_authenticated()
+            changed = True
+        if course_ids:
+            courses = [course async for course in foreach_course(client, course_ids)]
+            print(end=''.join(generate_table(courses)))
+            changed = True
+        if not changed:
+            print('Nothing to do')
 
 
 if __name__ == '__main__':

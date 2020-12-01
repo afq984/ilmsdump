@@ -36,6 +36,7 @@ setup(
         'yarl',
         'lxml',
         'click',
+        'wcwidth',
     ],
     entry_points={  # Optional
         'console_scripts': [
