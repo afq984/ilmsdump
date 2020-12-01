@@ -264,11 +264,6 @@ class Downloader:
             self.stats[item.__class__.__name__].completed += 1
             self.dqueue.task_done()
 
-    async def process(self, item: Downloadable):
-        async for child in item.index(client=self.client):
-            self.enqueue(child)
-        await item.download(client=self.client)
-
     async def run(self):
         self.iqueue.put_nowait(self._done)
         indexer = asyncio.create_task(self.indexer())
