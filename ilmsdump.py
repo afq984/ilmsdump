@@ -230,30 +230,13 @@ class Stat:
 class Downloader:
     def __init__(self, client: Client):
         self.client = client
-        self.iqueue = asyncio.Queue()
         self.dqueue = asyncio.Queue()
         self.stats = collections.defaultdict(Stat)
         self._done = object()
 
-    def enqueue(self, item: Downloadable):
-        self.iqueue.put_nowait(item)
-        self.stats[item.__class__.__name__].total += 1
-        self.report_progress()
-
     def report_progress(self):
         progress_str = ' '.join(f'{k}[{v.completed}/{v.total}]' for (k, v) in self.stats.items())
-        print('Progress:', progress_str, end='\r', file=sys.stderr)
-
-    async def indexer(self):
-        while True:
-            item = await self.iqueue.get()
-            if item is self._done:
-                self.dqueue.put_nowait(self._done)
-                break
-            async for child in item.index(client=self.client):
-                self.enqueue(child)
-            self.dqueue.put_nowait(item)
-            self.iqueue.task_done()
+        print('Progress:', progress_str, end='\n', file=sys.stderr)
 
     async def downloader(self):
         while True:
@@ -262,14 +245,26 @@ class Downloader:
                 break
             await item.download(client=self.client)
             self.stats[item.__class__.__name__].completed += 1
+            self.report_progress()
             self.dqueue.task_done()
 
-    async def run(self):
-        self.iqueue.put_nowait(self._done)
-        indexer = asyncio.create_task(self.indexer())
+    async def run(self, items):
         downloader = asyncio.create_task(self.downloader())
-        await indexer
+
+        while items:
+            item = items.pop()
+            self.dqueue.put_nowait(item)
+            self.stats[item.__class__.__name__].total += 1
+
+            async for child in item.index(self.client):
+                items.append(child)
+
+            self.report_progress()
+
+        self.dqueue.put_nowait(self._done)
+
         await downloader
+
         self.report_progress()
         print(file=sys.stderr)
 
@@ -493,9 +488,7 @@ async def main(course_ids, logout: bool, login: bool, output_dir: str):
             if courses:
                 changed = True
                 print(end=''.join(generate_table(courses)))
-                for c in courses:
-                    d.enqueue(c)
-                await d.run()
+                await d.run(courses)
         if not changed:
             print('Nothing to do')
 
