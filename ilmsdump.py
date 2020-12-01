@@ -51,14 +51,11 @@ def qs_get(url: str, key: str) -> str:
         raise KeyError(key, url) from None
 
 
-async def response_ok_as_html(response: aiohttp.ClientResponse):
-    response.raise_for_status()
-    return lxml.html.fromstring(await response.read())
-
-
 class ILMSClient:
     def __init__(self):
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(
+            raise_for_status=True,
+        )
 
         self.data_dir = os.path.abspath('ilmsdump.d')
         os.makedirs(self.data_dir, exist_ok=True)
@@ -126,7 +123,7 @@ class ILMSClient:
 
     async def get_login_state(self):
         async with self.session.get(LOGIN_STATE_URL) as response:
-            html = await response_ok_as_html(response)
+            html = lxml.html.fromstring(await response.read())
 
             if not html.xpath('//*[@id="login"]'):
                 return None
@@ -173,7 +170,7 @@ class ILMSClient:
 
     async def get_courses(self) -> AsyncGenerator['Course', None]:
         async with self.session.get(COURSE_LIST_URL) as response:
-            html = await response_ok_as_html(response)
+            html = lxml.html.fromstring(await response.read())
 
             for a in html.xpath('//td[@class="listTD"]/a'):
                 bs = a.xpath('b')
@@ -199,7 +196,7 @@ class ILMSClient:
         for page in itertools.count(page):
             params['page'] = page
             async with self.session.get(url, params=params) as response:
-                html = await response_ok_as_html(response)
+                html = lxml.html.fromstring(await response.read())
                 yield html
 
                 next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
