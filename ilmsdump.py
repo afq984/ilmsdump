@@ -211,20 +211,6 @@ class Client:
                     is_admin=is_admin,
                 )
 
-    async def _response_paginator(self, url, params, page=1):
-        for page in itertools.count(page):
-            params['page'] = page
-            async with self.session.get(url, params=params) as response:
-                html = lxml.html.fromstring(await response.read())
-
-                yield html
-
-                next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
-                if not next_hrefs:
-                    break
-                next_page = int(qs_get(next_hrefs[0], 'page'))
-                assert page + 1 == next_page
-
 
 class Downloadable:
     async def index(self, client) -> AsyncGenerator['Downloadable', None]:
@@ -289,6 +275,8 @@ class Downloader:
         downloader = asyncio.create_task(self.downloader())
         await indexer
         await downloader
+        self.report_progress()
+        print(file=sys.stderr)
 
 
 @dataclasses.dataclass
@@ -310,14 +298,28 @@ class Course(Downloadable):
             async for item in generator:
                 yield item
 
-    def _item_paginator(self, client, f):
-        return client._response_paginator(
-            'http://lms.nthu.edu.tw/course.php',
-            params={
-                'courseID': self.id,
-                'f': f,
-            },
-        )
+    async def _item_paginator(self, client, f, page=1):
+        for page in itertools.count(page):
+            async with client.session.get(
+                'http://lms.nthu.edu.tw/course.php',
+                params={
+                    'courseID': self.id,
+                    'f': f,
+                    'page': page,
+                },
+            ) as response:
+                html = lxml.html.fromstring(await response.read())
+
+                if html.xpath('//td[text()="目前尚無資料"]'):
+                    break
+
+                yield html
+
+                next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
+                if not next_hrefs:
+                    break
+                next_page = int(qs_get(next_hrefs[0], 'page'))
+                assert page + 1 == next_page
 
     async def get_announcements(self, client) -> AsyncGenerator['Announcement', None]:
         async for html in self._item_paginator(client, 'news'):
