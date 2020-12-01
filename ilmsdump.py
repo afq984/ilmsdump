@@ -185,7 +185,11 @@ class Client:
 
     async def get_courses(self) -> AsyncGenerator['Course', None]:
         async with self.session.get(COURSE_LIST_URL) as response:
-            html = lxml.html.fromstring(await response.read())
+            body = await response.read()
+            if b'\xe6\xac\x8a\xe9\x99\x90\xe4\xb8\x8d\xe8\xb6\xb3!' in body:
+                # '權限不足!'
+                raise UserError('Cannot get enrolled courses for user')
+            html = lxml.html.fromstring(body)
 
             for a in html.xpath('//td[@class="listTD"]/a'):
                 bs = a.xpath('b')
