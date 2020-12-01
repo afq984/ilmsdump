@@ -221,6 +221,15 @@ class Client:
                 assert page + 1 == next_page
 
 
+class Downloadable:
+    async def index(self, client) -> AsyncGenerator['Downloadable', None]:
+        return
+        yield
+
+    async def download(self, client) -> int:
+        return 0
+
+
 @dataclasses.dataclass
 class Stat:
     total: int = 0
@@ -232,7 +241,7 @@ class Downloader:
         self.queue = asyncio.Queue()
         self.stats = collections.defaultdict(Stat)
 
-    def enqueue(self, item):
+    def enqueue(self, item: Downloadable):
         self.queue.put_nowait(item)
         self.stats[item.__class__.__name__].total += 1
         self.report_progress()
@@ -249,7 +258,7 @@ class Downloader:
             self.report_progress()
             self.queue.task_done()
 
-    async def process(self, item):
+    async def process(self, item: Downloadable):
         pass
 
     async def run(self):
@@ -267,7 +276,7 @@ class Downloader:
 
 
 @dataclasses.dataclass
-class Course:
+class Course(Downloadable):
     """歷年課程檔案"""
 
     id: int
@@ -326,7 +335,7 @@ class Course:
 
 
 @dataclasses.dataclass
-class Announcement:
+class Announcement(Downloadable):
     """課程活動(公告)"""
 
     id: int
@@ -335,7 +344,7 @@ class Announcement:
 
 
 @dataclasses.dataclass
-class Material:
+class Material(Downloadable):
     """上課教材"""
 
     id: int
@@ -345,7 +354,7 @@ class Material:
 
 
 @dataclasses.dataclass
-class Discussion:
+class Discussion(Downloadable):
     """討論區"""
 
     id: int
@@ -354,7 +363,7 @@ class Discussion:
 
 
 @dataclasses.dataclass
-class Homework:
+class Homework(Downloadable):
     """作業"""
 
     id: int
