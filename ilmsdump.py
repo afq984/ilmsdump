@@ -30,6 +30,10 @@ class CannotUnderstand(Exception):
     pass
 
 
+class UserError(Exception):
+    pass
+
+
 def as_sync(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -130,6 +134,42 @@ class ILMSClient:
             name_node = html.xpath('//*[@id="profile"]/div[2]/div[1]/text()')
             assert name_node
             return ''.join(name_node).strip()
+
+    async def get_course(self, course_id: int) -> 'Course':
+        async with self.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': course_id,
+                'f': 'hwlist',
+            },
+        ) as response:
+            if response.url.path == '/course_login.php':
+                raise UserError(
+                    f'No access to course: course_id={course_id}'
+                )
+
+            body = await response.read()
+            if not body:
+                raise UserError(
+                    'Empty response returned for course, '
+                    f"the course probably doesn't exist: course_id={course_id}"
+                )
+
+            html = lxml.html.fromstring(body)
+
+            (name,) = html.xpath('//div[@class="infoPath"]/a/text()')
+
+            if html.xpath('//a[@href="javascript:add()"]'):
+                is_admin = True
+            else:
+                is_admin = False
+
+            return Course(
+                id=course_id,
+                name=name,
+                is_admin=is_admin,
+            )
+
 
     async def get_courses(self) -> AsyncGenerator['Course', None]:
         async with self.session.get(COURSE_LIST_URL) as response:
@@ -268,6 +308,17 @@ class Homework:
 @click.group()
 def main():
     pass
+
+
+@main.command()
+@click.argument('course_ids', nargs=-1, required=True)
+@as_sync
+async def download(course_ids):
+    async with ILMSClient() as client:
+        await client.ensure_authenticated()
+        for course_id in course_ids:
+            course = await client.get_course(course_id)
+            print(course)
 
 
 @main.command()
