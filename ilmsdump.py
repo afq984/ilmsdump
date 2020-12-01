@@ -32,9 +32,8 @@ class CannotUnderstand(Exception):
 def as_sync(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        return asyncio.run(
-            func(*args, **kwargs)
-        )
+        return asyncio.run(func(*args, **kwargs))
+
     return wrapper
 
 
@@ -74,7 +73,10 @@ class ILMSClient:
         except FileNotFoundError:
             await self.interactive_login()
             with open(cred_path, 'w') as file:
-                print(self.session.cookie_jar.filter_cookies(LOGIN_STATE_URL)['PHPSESSID'].value, file=file)
+                print(
+                    self.session.cookie_jar.filter_cookies(LOGIN_STATE_URL)['PHPSESSID'].value,
+                    file=file,
+                )
             self.log('Saved credentials to', cred_path)
         else:
             with cred_file:
@@ -94,7 +96,7 @@ class ILMSClient:
     async def login_with_username_and_password(self, username, password):
         login = self.session.get(
             LOGIN_URL,
-            params={'account': username, 'password': password}
+            params={'account': username, 'password': password},
         )
         async with login as response:
             response.raise_for_status()
@@ -136,7 +138,7 @@ class ILMSClient:
                 bs = a.xpath('b')
                 if bs:
                     is_admin = True
-                    tag, = bs
+                    (tag,) = bs
                 else:
                     is_admin = False
                     tag = a
@@ -169,6 +171,7 @@ class ILMSClient:
 @dataclasses.dataclass
 class Course:
     """歷年課程檔案"""
+
     id: int
     name: str
     is_admin: bool
@@ -185,8 +188,8 @@ class Course:
     async def get_announcements(self, client) -> AsyncGenerator['Announcement', None]:
         async for html in self._item_paginator(client, 'news'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
-                href, = tr.xpath('td[1]/a/@href')
-                title, = tr.xpath('td[2]//a/text()')
+                (href,) = tr.xpath('td[1]/a/@href')
+                (title,) = tr.xpath('td[2]//a/text()')
                 yield Announcement(
                     id=int(qs_get(href, 'newsID')),
                     title=title,
@@ -206,8 +209,8 @@ class Course:
     async def get_discussions(self, client) -> AsyncGenerator['Discussion', None]:
         async for html in self._item_paginator(client, 'forumlist'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
-                href, = tr.xpath('td[1]/a/@href')
-                title, = tr.xpath('td[2]//a/span/text()')
+                (href,) = tr.xpath('td[1]/a/@href')
+                (title,) = tr.xpath('td[2]//a/span/text()')
                 yield Discussion(
                     id=int(qs_get(href, 'tid')),
                     title=title,
@@ -227,6 +230,7 @@ class Course:
 @dataclasses.dataclass
 class Announcement:
     """課程活動(公告)"""
+
     id: int
     title: str
     course: Course
@@ -235,6 +239,7 @@ class Announcement:
 @dataclasses.dataclass
 class Material:
     """上課教材"""
+
     id: int
     title: str
     type: str
@@ -244,6 +249,7 @@ class Material:
 @dataclasses.dataclass
 class Discussion:
     """討論區"""
+
     id: int
     title: str
     course: Course
@@ -252,6 +258,7 @@ class Discussion:
 @dataclasses.dataclass
 class Homework:
     """作業"""
+
     id: int
     title: str
     course: Course
