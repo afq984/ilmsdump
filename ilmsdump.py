@@ -383,7 +383,7 @@ def validate_course_id(ctx, param, value: str):
 @click.option(
     '--login',
     is_flag=True,
-    help='Login to iLMS interactively before performing accessing iLMS',
+    help='Login to iLMS interactively before accessing iLMS',
 )
 @click.option(
     '-o',
