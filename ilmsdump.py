@@ -51,7 +51,7 @@ def qs_get(url: str, key: str) -> str:
         raise KeyError(key, url) from None
 
 
-class ILMSClient:
+class Client:
     def __init__(self, data_dir):
         self.session = aiohttp.ClientSession(
             raise_for_status=True,
@@ -342,7 +342,7 @@ def print_table(items):
 
 
 async def foreach_course(
-    client: ILMSClient, course_ids: List[Union[str, int]]
+    client: Client, course_ids: List[Union[str, int]]
 ) -> AsyncGenerator[Course, None]:
     for course_id in course_ids:
         if course_id == 'enrolled':
@@ -399,7 +399,7 @@ def validate_course_id(ctx, param, value: str):
 )
 @as_sync
 async def main(course_ids, logout: bool, login: bool, output_dir: str):
-    async with ILMSClient(data_dir=output_dir) as client:
+    async with Client(data_dir=output_dir) as client:
         changed = False
         if logout:
             changed |= client.clear_credentials()
