@@ -216,6 +216,7 @@ class Client:
             params['page'] = page
             async with self.session.get(url, params=params) as response:
                 html = lxml.html.fromstring(await response.read())
+
                 yield html
 
                 next_hrefs = html.xpath('//span[@class="page"]//a[text()="Next"]/@href')
@@ -246,6 +247,7 @@ class Downloader:
         self.iqueue = asyncio.Queue()
         self.dqueue = asyncio.Queue()
         self.stats = collections.defaultdict(Stat)
+        self._done = object()
 
     def enqueue(self, item: Downloadable):
         self.iqueue.put_nowait(item)
@@ -259,6 +261,9 @@ class Downloader:
     async def indexer(self):
         while True:
             item = await self.iqueue.get()
+            if item is self._done:
+                self.dqueue.put_nowait(self._done)
+                break
             async for child in item.index(client=self.client):
                 self.enqueue(child)
             self.dqueue.put_nowait(item)
@@ -267,6 +272,8 @@ class Downloader:
     async def downloader(self):
         while True:
             item = await self.dqueue.get()
+            if item is self._done:
+                break
             await item.download(client=self.client)
             self.stats[item.__class__.__name__].completed += 1
             self.dqueue.task_done()
@@ -277,19 +284,11 @@ class Downloader:
         await item.download(client=self.client)
 
     async def run(self):
-        tasks = [
-            asyncio.create_task(self.indexer()),
-            asyncio.create_task(self.downloader()),
-        ]
-
-        await self.iqueue.join()
-        await self.dqueue.join()
-
-        self.report_progress()
-        print(file=sys.stderr)
-
-        for task in tasks:
-            task.cancel()
+        self.iqueue.put_nowait(self._done)
+        indexer = asyncio.create_task(self.indexer())
+        downloader = asyncio.create_task(self.downloader())
+        await indexer
+        await downloader
 
 
 @dataclasses.dataclass
