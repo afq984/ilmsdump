@@ -1,5 +1,7 @@
 import os
 import re
+import sys
+import collections
 import functools
 import itertools
 import urllib.parse
@@ -220,6 +222,51 @@ class Client:
 
 
 @dataclasses.dataclass
+class Stat:
+    total: int = 0
+    completed: int = 0
+
+
+class Downloader:
+    def __init__(self):
+        self.queue = asyncio.Queue()
+        self.stats = collections.defaultdict(Stat)
+
+    def enqueue(self, item):
+        self.queue.put_nowait(item)
+        self.stats[item.__class__.__name__].total += 1
+        self.report_progress()
+
+    def report_progress(self):
+        progress_str = ' '.join(f'{k}[{v.completed}/{v.total}]' for (k, v) in self.stats.items())
+        print('Progress:', progress_str, end='\r', file=sys.stderr)
+
+    async def worker(self):
+        while True:
+            item = await self.queue.get()
+            await self.process(item)
+            self.stats[item.__class__.__name__].completed += 1
+            self.report_progress()
+            self.queue.task_done()
+
+    async def process(self, item):
+        pass
+
+    async def run(self):
+        tasks = []
+        for i in range(4):
+            tasks.append(asyncio.create_task(self.worker()))
+
+        await self.queue.join()
+
+        self.report_progress()
+        print(file=sys.stderr)
+
+        for task in tasks:
+            task.cancel()
+
+
+@dataclasses.dataclass
 class Course:
     """歷年課程檔案"""
 
@@ -400,16 +447,22 @@ def validate_course_id(ctx, param, value: str):
 @as_sync
 async def main(course_ids, logout: bool, login: bool, output_dir: str):
     async with Client(data_dir=output_dir) as client:
+        d = Downloader()
         changed = False
         if logout:
             changed |= client.clear_credentials()
         if login:
-            await client.ensure_authenticated()
             changed = True
+            await client.ensure_authenticated()
         if course_ids:
             courses = [course async for course in foreach_course(client, course_ids)]
-            print(end=''.join(generate_table(courses)))
-            changed = True
+
+            if courses:
+                changed = True
+                print(end=''.join(generate_table(courses)))
+                for c in courses:
+                    d.enqueue(c)
+                await d.run()
         if not changed:
             print('Nothing to do')
 
