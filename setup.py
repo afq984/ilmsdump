@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 import pathlib
 
 
@@ -44,7 +44,7 @@ setup(
             'pytest-asyncio',
         ],
     },
-    entry_points={  # Optional
+    entry_points={
         'console_scripts': [
             'ilmsdump=ilmsdump:main',
         ],
