@@ -72,17 +72,18 @@ class Client:
 
     log = staticmethod(print)
 
-    async def ensure_authenticated(self):
+    async def ensure_authenticated(self, prompt: bool):
         try:
             cred_file = open(self.cred_path)
         except FileNotFoundError:
-            await self.interactive_login()
-            with open(self.cred_path, 'w') as file:
-                print(
-                    self.session.cookie_jar.filter_cookies(LOGIN_STATE_URL)['PHPSESSID'].value,
-                    file=file,
-                )
-            self.log('Saved credentials to', self.cred_path)
+            if prompt:
+                await self.interactive_login()
+                with open(self.cred_path, 'w') as file:
+                    print(
+                        self.session.cookie_jar.filter_cookies(LOGIN_STATE_URL)['PHPSESSID'].value,
+                        file=file,
+                    )
+                self.log('Saved credentials to', self.cred_path)
         else:
             with cred_file:
                 self.log('Using existing credentials in', self.cred_path)
@@ -479,9 +480,10 @@ async def main(course_ids, logout: bool, login: bool, output_dir: str):
         changed = False
         if logout:
             changed |= client.clear_credentials()
-        if login:
-            changed = True
-            await client.ensure_authenticated()
+
+        await client.ensure_authenticated(prompt=login)
+        changed |= login
+
         if course_ids:
             courses = [course async for course in foreach_course(client, course_ids)]
 
