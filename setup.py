@@ -38,6 +38,12 @@ setup(
         'click',
         'wcwidth',
     ],
+    extras_require={
+        'dev': [
+            'pytest',
+            'pytest-asyncio',
+        ],
+    },
     entry_points={  # Optional
         'console_scripts': [
             'ilmsdump=ilmsdump:main',
