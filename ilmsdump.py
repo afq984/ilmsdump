@@ -237,7 +237,7 @@ class Downloader:
 
     def report_progress(self):
         progress_str = ' '.join(f'{k}[{v.completed}/{v.total}]' for (k, v) in self.stats.items())
-        print('Progress:', progress_str, end='\n', file=sys.stderr)
+        print('Progress:', progress_str, end='\r', file=sys.stderr)
 
     async def downloader(self):
         while True:
