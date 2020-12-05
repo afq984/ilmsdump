@@ -221,12 +221,9 @@ class Client:
 
 
 class Downloadable:
-    async def index(self, client) -> AsyncGenerator['Downloadable', None]:
+    async def download(self, client) -> AsyncGenerator['Downloadable', None]:
         return
         yield
-
-    async def download(self, client) -> int:
-        return 0
 
 
 @dataclasses.dataclass
@@ -238,40 +235,25 @@ class Stat:
 class Downloader:
     def __init__(self, client: Client):
         self.client = client
-        self.dqueue = asyncio.Queue()
         self.stats = collections.defaultdict(Stat)
-        self._done = object()
 
     def report_progress(self):
         progress_str = ' '.join(f'{k}[{v.completed}/{v.total}]' for (k, v) in self.stats.items())
         print('Progress:', progress_str, end='\r', file=sys.stderr)
 
-    async def downloader(self):
-        while True:
-            item = await self.dqueue.get()
-            if item is self._done:
-                break
-            await item.download(client=self.client)
-            self.stats[item.__class__.__name__].completed += 1
-            self.report_progress()
-            self.dqueue.task_done()
-
     async def run(self, items):
-        downloader = asyncio.create_task(self.downloader())
+        for item in items:
+            self.stats[item.__class__.__name__].total += 1
 
         while items:
             item = items.pop()
-            self.dqueue.put_nowait(item)
-            self.stats[item.__class__.__name__].total += 1
 
-            async for child in item.index(self.client):
+            async for child in item.download(self.client):
                 items.append(child)
+                self.stats[child.__class__.__name__].total += 1
 
+            self.stats[item.__class__.__name__].completed += 1
             self.report_progress()
-
-        self.dqueue.put_nowait(self._done)
-
-        await downloader
 
         self.report_progress()
         print(file=sys.stderr)
@@ -285,7 +267,7 @@ class Course(Downloadable):
     name: str
     is_admin: bool
 
-    async def index(self, client):
+    async def download(self, client):
         generators = [
             self.get_announcements(client),
             self.get_materials(client),
@@ -400,6 +382,8 @@ class Discussion(Downloadable):
                 raise CannotUnderstand(body_json)
             with (client.get_dir_for(self) / 'index.json').open('w') as file:
                 json.dump(body_json, file)
+        return
+        yield
 
 
 @dataclasses.dataclass
