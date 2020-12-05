@@ -1,6 +1,8 @@
 import os
 import re
 import sys
+import json
+import pathlib
 import collections
 import functools
 import itertools
@@ -59,7 +61,7 @@ class Client:
             raise_for_status=True,
         )
 
-        self.data_dir = os.path.abspath(data_dir)
+        self.data_dir = pathlib.Path(data_dir).absolute()
         os.makedirs(self.data_dir, exist_ok=True)
 
         self.cred_path = os.path.join(self.data_dir, 'credentials.txt')
@@ -211,6 +213,11 @@ class Client:
                     name=name,
                     is_admin=is_admin,
                 )
+
+    def get_dir_for(self, item: 'Downloadable') -> pathlib.Path:
+        d = self.data_dir / item.__class__.__name__.lower() / str(item.id)
+        d.mkdir(parents=True, exist_ok=True)
+        return d
 
 
 class Downloadable:
@@ -380,6 +387,19 @@ class Discussion(Downloadable):
     id: int
     title: str
     course: Course
+
+    async def download(self, client: Client):
+        async with client.session.post(
+            'http://lms.nthu.edu.tw/sys/lib/ajax/post.php',
+            data={
+                'id': self.id,
+            },
+        ) as response:
+            body_json = await response.json(content_type=None)
+            if not body_json['posts']['status']:
+                raise CannotUnderstand(body_json)
+            with (client.get_dir_for(self) / 'index.json').open('w') as file:
+                json.dump(body_json, file)
 
 
 @dataclasses.dataclass
