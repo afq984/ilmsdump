@@ -238,7 +238,9 @@ class Downloader:
         self.stats = collections.defaultdict(Stat)
 
     def report_progress(self):
-        progress_str = ' '.join(f'{k}[{v.completed}/{v.total}]' for (k, v) in self.stats.items())
+        progress_str = ' '.join(
+            f'{k[:3]}[{v.completed}/{v.total}]' for (k, v) in self.stats.items()
+        )
         print('Progress:', progress_str, end='\r', file=sys.stderr)
 
     async def run(self, items):
@@ -380,10 +382,16 @@ class Discussion(Downloadable):
             body_json = await response.json(content_type=None)
             if not body_json['posts']['status']:
                 raise CannotUnderstand(body_json)
+
+            for post in body_json['posts']['items']:
+                for attachment in post['attach']:
+                    yield Attachment(
+                        id=int(attachment['id']),
+                        parent=self,
+                    )
+
             with (client.get_dir_for(self) / 'index.json').open('w') as file:
                 json.dump(body_json, file)
-        return
-        yield
 
 
 @dataclasses.dataclass
@@ -393,6 +401,34 @@ class Homework(Downloadable):
     id: int
     title: str
     course: Course
+
+
+@dataclasses.dataclass
+class Attachment(Downloadable):
+    id: int
+    parent: Downloadable
+
+    async def download(self, client):
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/sys/read_attach.php',
+            params={
+                'id': self.id,
+            },
+        ) as response:
+            content_disposition = response.headers['Content-Disposition']
+            with (client.get_dir_for(self) / 'meta.json').open('w') as file:
+                json.dump(
+                    {
+                        'Content-Disposition': content_disposition,
+                    },
+                    file,
+                )
+
+            with (client.get_dir_for(self) / 'data').open('wb') as file:
+                async for chunk in response.content.iter_any():
+                    file.write(chunk)
+        return
+        yield
 
 
 def generate_table(items):
