@@ -261,6 +261,16 @@ class Downloader:
         print(file=sys.stderr)
 
 
+def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
+    main, = html.xpath('//div[@id="main"]')
+    for to_remove in itertools.chain(
+        main.xpath('div[@class="infoPath"]'),
+        main.xpath('//script'),
+    ):
+        to_remove.getparent().remove(to_remove)
+    return main
+
+
 @dataclasses.dataclass
 class Course(Downloadable):
     """歷年課程檔案"""
@@ -279,6 +289,21 @@ class Course(Downloadable):
         for generator in generators:
             async for item in generator:
                 yield item
+
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': self.id,
+                'f': 'syllabus',
+            },
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
+
+        if html.xpath('//input[@id="loginAccount"]'):
+            raise UserError('Must login')
+        main = html_get_main(html)
+        with (client.get_dir_for(self) / 'index.html').open('wb') as file:
+            file.write(lxml.html.tostring(main))
 
     async def _item_paginator(self, client, f, page=1):
         for page in itertools.count(page):
