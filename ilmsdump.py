@@ -438,7 +438,7 @@ class Discussion(Downloadable):
             },
         ) as response:
             body_json = await response.json(content_type=None)
-            if not body_json['posts']['status']:
+            if body_json['posts']['status'] != 'true':
                 raise CannotUnderstand(body_json)
 
             for post in body_json['posts']['items']:
