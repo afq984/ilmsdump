@@ -11,7 +11,7 @@ import asyncio
 import getpass
 import dataclasses
 
-from typing import List, Union, AsyncGenerator
+from typing import List, Union, AsyncGenerator, Iterable
 
 import aiohttp
 import yarl
@@ -35,6 +35,10 @@ class CannotUnderstand(Exception):
 
 
 class UserError(Exception):
+    pass
+
+
+class Unavailable(Exception):
     pass
 
 
@@ -271,6 +275,16 @@ def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
     return main
 
 
+def get_attachments(parent: Downloadable, element: lxml.html.HtmlElement) -> Iterable['Attachment']:
+    for a in element.xpath('//a[starts-with(@href, "/sys/read_attach.php")]'):
+        url = yarl.URL(a.attrib['href'])
+        title = a.text
+        yield Attachment(
+            id=url.query['id'],
+            parent=parent,
+        )
+
+
 @dataclasses.dataclass
 class Course(Downloadable):
     """歷年課程檔案"""
@@ -377,6 +391,27 @@ class Announcement(Downloadable):
     id: int
     title: str
     course: Course
+
+    async def download(self, client: Client):
+        async with client.session.post(
+            'http://lms.nthu.edu.tw/home/http_event_select.php',
+            params={
+                'id': self.id,
+                'type': 'n',
+            },
+        ) as response:
+            body_json = await response.json(content_type=None)
+
+        if body_json['news']['note'] == 'NA' and body_json['news']['poster'] == '':
+            raise Unavailable(body_json)
+
+        attachment_raw_div = body_json['news']['attach']
+        if attachment_raw_div is not None:
+            for attachment in get_attachments(self, lxml.html.fromstring(attachment_raw_div)):
+                yield attachment
+
+        with (client.get_dir_for(self) / 'index.json').open('w') as file:
+            json.dump(body_json, file)
 
 
 @dataclasses.dataclass
