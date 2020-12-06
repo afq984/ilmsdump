@@ -6,7 +6,6 @@ import pathlib
 import collections
 import functools
 import itertools
-import urllib.parse
 import asyncio
 import getpass
 import dataclasses
@@ -51,10 +50,9 @@ def as_sync(func):
 
 
 def qs_get(url: str, key: str) -> str:
-    purl = urllib.parse.urlparse(url)
-    query = urllib.parse.parse_qs(purl.query)
+    purl = yarl.URL(url)
     try:
-        return query[key][0]
+        return purl.query[key]
     except KeyError:
         raise KeyError(key, url) from None
 
