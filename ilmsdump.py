@@ -317,7 +317,7 @@ class Course(Downloadable):
             ) as response:
                 html = lxml.html.fromstring(await response.read())
 
-                if html.xpath('//td[text()="目前尚無資料"]'):
+                if html.xpath('//td[text()="目前尚無資料"]'):  # XXX: might be in English
                     break
 
                 yield html
