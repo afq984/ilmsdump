@@ -262,7 +262,7 @@ class Downloader:
 
 
 def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
-    main, = html.xpath('//div[@id="main"]')
+    (main,) = html.xpath('//div[@id="main"]')
     for to_remove in itertools.chain(
         main.xpath('div[@class="infoPath"]'),
         main.xpath('//script'),
