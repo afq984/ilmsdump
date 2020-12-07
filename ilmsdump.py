@@ -460,7 +460,7 @@ class Material(Downloadable):
 
     id: int
     title: str
-    type: str
+    type: str  # "Econtent" or "Epowercam"
     course: Course
 
     async def download(self, client: Client):
