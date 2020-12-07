@@ -10,9 +10,35 @@ You may want to specify `--user`, or run the command in a [virtual environment].
 
 ## Features & Status
 
-In general, the goal is to support everything defined in [自iLMS備份課程檔案-浮水印.pdf] [backup]
+> ✔️ supported; 🚧 work in progress; ❓ maybe; ❌ lack of interest or too complicated
 
-See https://github.com/afq984/ilmsdump/projects/1 for progress.
+*   登入 ✔️
+    *   PHPSESSID ✔️
+    *   帳號密碼 ❓
+*   課程活動(公告) ✔️
+    *   公告 ✔️
+        *   附件 ✔️
+    *   活動 ❓
+*   上課教材 ✔️
+    *   附件 ✔️
+    *   Evercam/Powercam 影片 ✔️
+*   作業 ✔️
+    *   作業資訊 ✔️
+        *   附件 ✔️
+    *   已繳交作業 🚧
+        *   附件 🚧
+        *   評分 🚧
+        *   評語 🚧
+        *   分組作業 🚧
+*   問卷 ❌
+*   線上測驗 ❌
+*   出缺勤(統計) ❌
+*   成績計算 ❓
+*   討論區 ✔️
+    *   附件 ✔️
+*   小組專區 🚧
+
+See also: [自iLMS備份課程檔案-浮水印.pdf] [backup]
 
 [virtual environment]: https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment
 [自iLMS備份課程檔案-浮水印.pdf]: http://lms.nthu.edu.tw/sys/read_attach.php?id=2470763
