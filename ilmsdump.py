@@ -311,11 +311,16 @@ def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
 
 
 def get_attachments(parent: Downloadable, element: lxml.html.HtmlElement) -> Iterable['Attachment']:
+    ids = set()
     for a in element.xpath('//a[starts-with(@href, "/sys/read_attach.php")]'):
         url = yarl.URL(a.attrib['href'])
-        title = a.text
+        id_ = int(url.query['id'])
+        if id_ in ids:
+            continue
+        ids.add(id_)
+        title = a.attrib.get('title', a.text)
         yield Attachment(
-            id=url.query['id'],
+            id=id_,
             parent=parent,
         )
 
@@ -457,6 +462,21 @@ class Material(Downloadable):
     title: str
     type: str
     course: Course
+
+    async def download(self, client: Client):
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': self.course.id,
+                'f': 'doc',
+                'cid': self.id,
+            },
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
+            main = html_get_main(html)
+
+            for attachment in get_attachments(self, main):
+                yield attachment
 
 
 @dataclasses.dataclass
