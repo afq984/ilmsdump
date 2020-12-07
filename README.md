@@ -6,7 +6,7 @@
 pip install -U https://github.com/afq984/ilmsdump/archive/main.zip
 ```
 
-You may want to specify `--user`, or run the command in a [virtual environment].
+You may want to specify `--user`, or install in a [virtual environment].
 
 ## Features & Status
 
