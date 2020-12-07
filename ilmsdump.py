@@ -10,6 +10,7 @@ import itertools
 import asyncio
 import getpass
 import dataclasses
+import contextlib
 
 from typing import List, Union, AsyncGenerator, Iterable
 
@@ -269,9 +270,18 @@ class Downloader:
         dl_size_str = kmgt(self.client.bytes_downloaded)
         print(f'DL:{dl_size_str}B', progress_str, end='\r', file=sys.stderr)
 
+    async def periodically_report_progress(self, done: asyncio.Event, period: float = 0.5):
+        while not done.is_set():
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(done.wait(), period)
+            self.report_progress()
+
     async def run(self, items):
         for item in items:
             self.stats[item.__class__.__name__].total += 1
+
+        done = asyncio.Event()
+        report_progress_task = asyncio.create_task(self.periodically_report_progress(done))
 
         while items:
             item = items.pop()
@@ -282,6 +292,9 @@ class Downloader:
 
             self.stats[item.__class__.__name__].completed += 1
             self.report_progress()
+
+        done.set()
+        await report_progress_task
 
         self.report_progress()
         print(file=sys.stderr)
