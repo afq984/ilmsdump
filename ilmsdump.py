@@ -478,8 +478,29 @@ class Material(Downloadable):
         for attachment in get_attachments(self, main):
             yield attachment
 
+        if self.type == 'Epowercam':
+            yield await self.get_video(client, response.url)
+
         with (client.get_dir_for(self) / 'index.html').open('wb') as file:
             file.write(lxml.html.tostring(main))
+
+    async def get_video(self, client: Client, base_url: yarl.URL):
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/sys/http_get_media.php',
+            params={
+                'id': self.id,
+                'db_table': 'content',
+                'flash_installed': 'false',
+                'swf_id': f'swfslide{self.id}',
+                'area_size': '724x3',
+            },
+        ) as response:
+            body_json = await response.json(content_type=None)
+        if body_json['ret']['status'] != 'true':
+            raise CannotUnderstand(f'Video not found: {self}, {body_json}')
+        html = lxml.html.fromstring(body_json['ret']['embed'])
+        (src,) = html.xpath('//video/@src')
+        return Video(id=self.id, url=base_url.join(yarl.URL(src)))
 
 
 @dataclasses.dataclass
@@ -543,6 +564,20 @@ class Attachment(Downloadable):
                 )
 
             with (client.get_dir_for(self) / 'data').open('wb') as file:
+                async for chunk in response.content.iter_any():
+                    file.write(chunk)
+        return
+        yield
+
+
+@dataclasses.dataclass
+class Video(Downloadable):
+    id: int
+    url: yarl.URL
+
+    async def download(self, client):
+        async with client.session.get(self.url) as response:
+            with (client.get_dir_for(self) / 'video.mp4').open('wb') as file:
                 async for chunk in response.content.iter_any():
                     file.write(chunk)
         return
