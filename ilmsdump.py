@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import types
 import json
 import pathlib
 import collections
@@ -59,8 +60,14 @@ def qs_get(url: str, key: str) -> str:
 
 class Client:
     def __init__(self, data_dir):
+        self.bytes_downloaded = 0
+
+        trace_config = aiohttp.TraceConfig()
+        trace_config.on_response_chunk_received.append(self.session_on_response_chunk_received)
+
         self.session = aiohttp.ClientSession(
             raise_for_status=True,
+            trace_configs=[trace_config],
         )
 
         self.data_dir = pathlib.Path(data_dir).absolute()
@@ -153,6 +160,14 @@ class Client:
             assert name_node
             return ''.join(name_node).strip()
 
+    async def session_on_response_chunk_received(
+        self,
+        session: aiohttp.ClientSession,
+        context: types.SimpleNamespace,
+        params: aiohttp.TraceResponseChunkReceivedParams,
+    ) -> None:
+        self.bytes_downloaded += len(params.chunk)
+
     async def get_course(self, course_id: int) -> 'Course':
         async with self.session.get(
             'http://lms.nthu.edu.tw/course.php',
@@ -234,6 +249,14 @@ class Stat:
     completed: int = 0
 
 
+def kmgt(n: int) -> str:
+    for i, unit in enumerate(('', 'K', 'M', 'G', 'T', 'P')):
+        if n < 1000:
+            break
+        n /= 1000
+    return f'{n:.3g}{unit}'
+
+
 class Downloader:
     def __init__(self, client: Client):
         self.client = client
@@ -243,7 +266,8 @@ class Downloader:
         progress_str = ' '.join(
             f'{k[:3]}[{v.completed}/{v.total}]' for (k, v) in self.stats.items()
         )
-        print('Progress:', progress_str, end='\r', file=sys.stderr)
+        dl_size_str = kmgt(self.client.bytes_downloaded)
+        print(f'DL:{dl_size_str}B', progress_str, end='\r', file=sys.stderr)
 
     async def run(self, items):
         for item in items:
