@@ -286,9 +286,12 @@ class Downloader:
         while items:
             item = items.pop()
 
-            async for child in item.download(self.client):
-                items.append(child)
-                self.stats[child.__class__.__name__].total += 1
+            try:
+                async for child in item.download(self.client):
+                    items.append(child)
+                    self.stats[child.__class__.__name__].total += 1
+            except Exception:
+                raise Exception(f'Error occurred while handling {item}')
 
             self.stats[item.__class__.__name__].completed += 1
             self.report_progress()
