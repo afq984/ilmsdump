@@ -473,10 +473,13 @@ class Material(Downloadable):
             },
         ) as response:
             html = lxml.html.fromstring(await response.read())
-            main = html_get_main(html)
+        main = html_get_main(html)
 
-            for attachment in get_attachments(self, main):
-                yield attachment
+        for attachment in get_attachments(self, main):
+            yield attachment
+
+        with (client.get_dir_for(self) / 'index.html').open('wb') as file:
+            file.write(lxml.html.tostring(main))
 
 
 @dataclasses.dataclass
