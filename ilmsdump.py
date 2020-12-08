@@ -293,6 +293,8 @@ class Downloader:
             self.report_progress()
 
     async def run(self, items):
+        items = collections.deque(items)
+
         for item in items:
             self.stats[item.__class__.__name__].total += 1
 
@@ -300,7 +302,7 @@ class Downloader:
         report_progress_task = asyncio.create_task(self.periodically_report_progress(done))
 
         while items:
-            item = items.pop()
+            item = items.popleft()
 
             try:
                 async for child in item.download(self.client):
