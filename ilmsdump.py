@@ -266,12 +266,12 @@ class Stat:
     completed: int = 0
 
 
-def kmgt(n: int) -> str:
-    for i, unit in enumerate(('', 'K', 'M', 'G', 'T', 'P')):
+def format_size(n: int) -> str:
+    for i, unit in enumerate(('B', 'KB', 'MB', 'GB', 'TB', 'PB')):
         if n < 1000:
             break
         n /= 1000
-    return f'{n:.3g}{unit}'
+    return f'{n:>4.3g}{unit:<2}'
 
 
 class Downloader:
@@ -283,8 +283,8 @@ class Downloader:
         progress_str = ' '.join(
             f'{k[:3]}[{v.completed}/{v.total}]' for (k, v) in self.stats.items()
         )
-        dl_size_str = kmgt(self.client.bytes_downloaded)
-        print(f'DL:{dl_size_str}B', progress_str, end='\r', file=sys.stderr)
+        dl_size_str = format_size(self.client.bytes_downloaded)
+        print(f'DL:{dl_size_str}', progress_str, end='\r', file=sys.stderr)
 
     async def periodically_report_progress(self, done: asyncio.Event, period: float = 0.5):
         while not done.is_set():
