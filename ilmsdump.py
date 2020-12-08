@@ -76,7 +76,12 @@ class Client:
 
         self.cred_path = os.path.join(self.data_dir, 'credentials.txt')
 
+        self._workaround_client_response_content_is_traced = None
+
     async def __aenter__(self):
+        self._workaround_client_response_content_is_traced = (
+            self._test_client_response_content_is_traced()
+        )
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -486,12 +491,14 @@ class Material(Downloadable):
             yield attachment
 
         if self.type == 'Epowercam':
-            yield await self.get_video(client, response.url)
+            video = await self.get_video(client, response.url)
+            if video is not None:
+                yield video
 
         with (client.get_dir_for(self) / 'index.html').open('wb') as file:
             file.write(lxml.html.tostring(main))
 
-    async def get_video(self, client: Client, base_url: yarl.URL):
+    async def get_video(self, client: Client, base_url: yarl.URL) -> Union[None, 'Video']:
         async with client.session.get(
             'http://lms.nthu.edu.tw/sys/http_get_media.php',
             params={
@@ -505,6 +512,11 @@ class Material(Downloadable):
             body_json = await response.json(content_type=None)
         if body_json['ret']['status'] != 'true':
             raise CannotUnderstand(f'Video not found: {self}, {body_json}')
+        if body_json['ret']['player_width'] is None:
+            # 轉檔中
+            # {"ret":{"status":"true","id":"2475544","embed":"...",
+            # "player_width":null,"player_height":null}}
+            return None
         html = lxml.html.fromstring(body_json['ret']['embed'])
         (src,) = html.xpath('//video/@src')
         return Video(id=self.id, url=base_url.join(yarl.URL(src)))
