@@ -281,7 +281,7 @@ class Downloader:
 
     def report_progress(self):
         progress_str = ' '.join(
-            f'{k[:3]}[{v.completed}/{v.total}]' for (k, v) in self.stats.items()
+            f'{k[:3]}:{v.completed}/{v.total}' for (k, v) in self.stats.items()
         )
         dl_size_str = format_size(self.client.bytes_downloaded)
         print(f'DL:{dl_size_str}', progress_str, end='\r', file=sys.stderr)
