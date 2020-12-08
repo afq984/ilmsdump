@@ -323,7 +323,7 @@ def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
     (main,) = html.xpath('//div[@id="main"]')
     for to_remove in itertools.chain(
         main.xpath('div[@class="infoPath"]'),
-        main.xpath('//script'),
+        main.xpath('.//script'),
     ):
         to_remove.getparent().remove(to_remove)
     return main
@@ -331,7 +331,7 @@ def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
 
 def get_attachments(parent: Downloadable, element: lxml.html.HtmlElement) -> Iterable['Attachment']:
     ids = set()
-    for a in element.xpath('//a[starts-with(@href, "/sys/read_attach.php")]'):
+    for a in element.xpath('.//a[starts-with(@href, "/sys/read_attach.php")]'):
         url = yarl.URL(a.attrib['href'])
         id_ = int(url.query['id'])
         if id_ in ids:
@@ -425,7 +425,7 @@ class Course(Downloadable):
     async def get_discussions(self, client) -> AsyncGenerator['Discussion', None]:
         async for html in self._item_paginator(client, 'forumlist'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
-                if tr.xpath('//img[@class="vmiddle"]'):
+                if tr.xpath('.//img[@class="vmiddle"]'):
                     # XXX: belongs to a homework, material
                     # don't know if it is accessible
                     continue
