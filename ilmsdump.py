@@ -76,18 +76,29 @@ class Client:
 
         self.cred_path = os.path.join(self.data_dir, 'credentials.txt')
 
+        # https://github.com/aio-libs/aiohttp/issues/5324
         self._workaround_client_response_content_is_traced = None
 
     async def __aenter__(self):
         self._workaround_client_response_content_is_traced = (
-            self._test_client_response_content_is_traced()
+            await self._test_client_response_content_is_traced()
         )
+
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
         await self.session.close()
 
     log = staticmethod(print)
+
+    async def _test_client_response_content_is_traced(self) -> bool:
+        old_bytes_downloaded = self.bytes_downloaded
+        async with self.session.get('http://lms.nthu.edu.tw/') as response:
+            async for chunk in response.content.iter_any():
+                pass
+        result = self.bytes_downloaded > old_bytes_downloaded
+        self.bytes_downloaded = old_bytes_downloaded
+        return result
 
     async def ensure_authenticated(self, prompt: bool):
         try:
@@ -584,6 +595,8 @@ class Attachment(Downloadable):
 
             with (client.get_dir_for(self) / 'data').open('wb') as file:
                 async for chunk in response.content.iter_any():
+                    if not client._workaround_client_response_content_is_traced:
+                        client.bytes_downloaded += len(chunk)
                     file.write(chunk)
         return
         yield
@@ -598,6 +611,8 @@ class Video(Downloadable):
         async with client.session.get(self.url) as response:
             with (client.get_dir_for(self) / 'video.mp4').open('wb') as file:
                 async for chunk in response.content.iter_any():
+                    if not client._workaround_client_response_content_is_traced:
+                        client.bytes_downloaded += len(chunk)
                     file.write(chunk)
         return
         yield
