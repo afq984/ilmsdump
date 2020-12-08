@@ -409,6 +409,10 @@ class Course(Downloadable):
     async def get_discussions(self, client) -> AsyncGenerator['Discussion', None]:
         async for html in self._item_paginator(client, 'forumlist'):
             for tr in html.xpath('//*[@id="main"]//tr[@class!="header"]'):
+                if tr.xpath('//img[@class="vmiddle"]'):
+                    # XXX: belongs to a homework, material
+                    # don't know if it is accessible
+                    continue
                 (href,) = tr.xpath('td[1]/a/@href')
                 (title,) = tr.xpath('td[2]//a/span/text()')
                 yield Discussion(
