@@ -22,6 +22,7 @@ You may want to specify `--user`, or install in a [virtual environment].
 *   上課教材 ✔️
     *   附件 ✔️
     *   Evercam/Powercam 影片 ✔️
+    *   討論 ❓
 *   作業 ✔️
     *   作業資訊 ✔️
         *   附件 ✔️
@@ -30,6 +31,7 @@ You may want to specify `--user`, or install in a [virtual environment].
         *   評分 🚧
         *   評語 🚧
         *   分組作業 🚧
+        *   討論 ❓
 *   問卷 ❌
 *   線上測驗 ❌
 *   出缺勤(統計) ❌
@@ -37,6 +39,7 @@ You may want to specify `--user`, or install in a [virtual environment].
 *   討論區 ✔️
     *   附件 ✔️
 *   小組專區 🚧
+    *   討論 ❓
 
 See also: [自iLMS備份課程檔案-浮水印.pdf] [backup]
 
