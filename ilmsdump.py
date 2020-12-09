@@ -271,7 +271,7 @@ def format_size(n: int) -> str:
         if n < 1000:
             break
         n /= 1000
-    return f'{n:>4.3g}{unit:<2}'
+    return f'{n:>#4.3g}{unit:<2}'
 
 
 class Downloader:
