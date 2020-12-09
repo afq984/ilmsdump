@@ -586,15 +586,6 @@ class Attachment(Downloadable):
                 'id': self.id,
             },
         ) as response:
-            content_disposition = response.headers['Content-Disposition']
-            with (client.get_dir_for(self) / 'meta.json').open('w') as file:
-                json.dump(
-                    {
-                        'Content-Disposition': content_disposition,
-                    },
-                    file,
-                )
-
             with (client.get_dir_for(self) / 'data').open('wb') as file:
                 async for chunk in response.content.iter_any():
                     if not client._workaround_client_response_content_is_traced:
