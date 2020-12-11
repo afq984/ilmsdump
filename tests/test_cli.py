@@ -28,3 +28,21 @@ def test_logout(tempdir):
 
     assert not os.path.exists(cred_file)
     assert 'Removed' in result.stdout
+
+
+def test_download(tempdir):
+    """
+    very basic download test
+    """
+
+    runner = click.testing.CliRunner(mix_stderr=False)
+    runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '399'])
+
+    # http://lms.nthu.edu.tw/course/399
+    # open course having no attachments
+
+    for sub in [
+        'course/399/index.html',
+        'announcement/2714/index.json',
+    ]:
+        assert os.path.exists(os.path.join(tempdir, sub))
