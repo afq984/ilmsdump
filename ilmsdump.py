@@ -197,9 +197,12 @@ class Client:
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'courseID': course_id,
-                'f': 'hwlist',
+                'f': 'syllabus',
             },
         ) as response:
+            if response.url.path == '/course_login.php':
+                raise UserError(f'No access to course: course_id={course_id}')
+
             body = await response.read()
             if not body:
                 raise UserError(
@@ -211,19 +214,22 @@ class Client:
 
             (name,) = html.xpath('//div[@class="infoPath"]/a/text()')
 
-            if html.xpath('//a[@href="javascript:add()"]'):
+            (hint,) = html.xpath('//div[@class="infoTable"]//td[2]/span[@class="hint"]/text()')
+            m = re.match(r'\(\w+, (\w+), \w+, \w+\)', hint)
+            assert m is not None, hint
+            serial = m.group(1)
+
+            if html.xpath('//div[@id="main"]//a[@href="javascript:editDoc(1)"]'):
                 is_admin = True
             else:
                 is_admin = False
 
             course = Course(
                 id=course_id,
+                serial=serial,
                 name=name,
                 is_admin=is_admin,
             )
-
-            if response.url.path == '/course_login.php':
-                raise UserError(f'No access to course: {course}')
 
             return course
 
@@ -245,12 +251,14 @@ class Client:
                     tag = a
 
                 name = tag.text
+                serial = a.getparent().getparent()[0].text
 
                 m = re.match(r'/course/(\d+)', a.attrib['href'])
                 if m is None:
                     raise CannotUnderstand('course URL', a.attrib['href'])
                 yield Course(
                     id=int(m.group(1)),
+                    serial=serial,
                     name=name,
                     is_admin=is_admin,
                 )
@@ -392,6 +400,7 @@ class Course(Downloadable):
     """歷年課程檔案"""
 
     id: int
+    serial: str  # 科號
     name: str
     is_admin: bool
 

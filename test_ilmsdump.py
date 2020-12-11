@@ -8,6 +8,18 @@ from typing import AsyncGenerator
 import ilmsdump
 
 
+COURSE_74 = ilmsdump.Course(
+    id=74,
+    serial='0001',
+    name='iLMS平台線上客服專區',
+    is_admin=False,
+)
+
+COURSE_46274 = ilmsdump.Course(
+    id=46274, serial='10910CS542200', name='平行程式Parallel Programming', is_admin=False
+)
+
+
 def test_qs_get():
     assert ilmsdump.qs_get('http://example.com/?a=b', 'a') == 'b'
     with pytest.raises(KeyError):
@@ -25,9 +37,7 @@ async def get_client() -> AsyncGenerator[ilmsdump.Client, None]:
 async def test_get_course_anonymous():
     async with get_client() as client:
         course = await client.get_course(46274)
-        assert course.id == 46274
-        assert course.name == '平行程式Parallel Programming'
-        assert course.is_admin is False
+        assert course == COURSE_46274
 
 
 @pytest.mark.asyncio
@@ -52,7 +62,6 @@ async def test_get_course_authentication_required():
             await client.get_course(43477)
 
 
-
 @pytest.mark.asyncio
 async def test_clear_credentials():
     async with get_client() as client:
@@ -72,6 +81,6 @@ async def test_get_login_state_anonymous():
 @pytest.mark.asyncio
 async def test_get_dir_for():
     async with get_client() as client:
-        course = ilmsdump.Course(id=74, name='example', is_admin=False)
+        course = COURSE_74
         dir_ = client.get_dir_for(course)
         assert dir_.exists()
