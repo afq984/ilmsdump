@@ -437,7 +437,10 @@ class Course(Downloadable):
             ) as response:
                 html = lxml.html.fromstring(await response.read())
 
-                if html.xpath('//td[text()="目前尚無資料"]'):  # XXX: might be in English
+                second_row_tds = html.xpath('//div[@class="tableBox"]/table/tr[2]/td')
+                if len(second_row_tds) == 1:
+                    # 目前尚無資料 or No Data
+                    assert second_row_tds[0].text in ('目前尚無資料', 'No Data')
                     break
 
                 yield html
