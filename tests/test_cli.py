@@ -43,6 +43,8 @@ def test_download(tempdir):
 
     for sub in [
         'course/399/index.html',
+        'course/399/meta.json',
         'announcement/2714/index.json',
+        'announcement/2714/meta.json',
     ]:
         assert os.path.exists(os.path.join(tempdir, sub))
