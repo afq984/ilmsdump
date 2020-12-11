@@ -1,3 +1,5 @@
+import textwrap
+
 import lxml.html
 import pytest
 import yarl
@@ -31,3 +33,19 @@ def test_get_attachments():
     assert list(ilmsdump.get_attachments(data.COURSE_74, html)) == [
         ilmsdump.Attachment(id=12345, title='attachment.txt', parent=data.COURSE_74),
     ]
+
+
+def test_generate_table():
+    table = ''.join(
+        ilmsdump.generate_table(
+            [data.COURSE_74, data.COURSE_1808, data.COURSE_359],
+        )
+    )
+    expected = '''\
+id    serial           name                                 is_admin
+----  ---------------  -----------------------------------  --------
+74    0001             iLMS平台線上客服專區                 False\x20\x20\x20
+1808  09810BMES525100  藥物控制釋放Drug Controlled Release  False\x20\x20\x20
+359   09810CL492400    敦煌學Dunhuang Studies               False\x20\x20\x20
+'''
+    assert expected == table
