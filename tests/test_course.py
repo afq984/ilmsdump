@@ -38,7 +38,7 @@ async def test_get_materials(client):
     assert data.MATERIAL_2173495 in materials
 
     materials = [m async for m in data.COURSE_74.get_materials(client)]
-    assert data.MATERIAL_258234 in materials
+    assert data.MATERIAL_1518 in materials
 
 
 @pytest.mark.asyncio

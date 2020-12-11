@@ -1,3 +1,5 @@
+import yarl
+
 import ilmsdump
 
 
@@ -81,6 +83,12 @@ MATERIAL_2173495 = ilmsdump.Material(
     course=COURSE_40596,
 )
 
+ATTACHMENT_2107249 = ilmsdump.Attachment(
+    id=2107249,
+    title='Chap12_Distributed Computing for DL.pdf',
+    parent=MATERIAL_2173495,
+)
+
 MATERIAL_2004666 = ilmsdump.Material(
     id=2004666,
     title='Syllabus',
@@ -88,11 +96,16 @@ MATERIAL_2004666 = ilmsdump.Material(
     course=COURSE_40596,
 )
 
-MATERIAL_258234 = ilmsdump.Material(
-    id=258234,
-    title='101學年度iLMS數位學習平台9/21應用課程錄影檔',
+MATERIAL_1518 = ilmsdump.Material(
+    id=1518,
+    title='PowerCam5 簡報錄影軟體',
     type='Epowercam',
     course=COURSE_74,
+)
+
+VIDEO_1518 = ilmsdump.Video(
+    id=1518,
+    url=yarl.URL('http://lms.nthu.edu.tw/sysdata/74/74/doc/f08b98ab0aeddfd0/video/video_hd.mp4'),
 )
 
 HOMEWORK_198377 = ilmsdump.Homework(
