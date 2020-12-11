@@ -305,14 +305,6 @@ class Stat:
     completed: int = 0
 
 
-def format_size(n: int) -> str:
-    for i, unit in enumerate(('B', 'KB', 'MB', 'GB', 'TB', 'PB')):
-        if n < 1000:
-            break
-        n /= 1000
-    return f'{n:>#4.3g}{unit:<2}'
-
-
 class Downloader:
     def __init__(self, client: Client):
         self.client = client
@@ -320,7 +312,7 @@ class Downloader:
 
     def report_progress(self):
         progress_str = ' '.join(f'{k[:3]}:{v.completed}/{v.total}' for (k, v) in self.stats.items())
-        dl_size_str = format_size(self.client.bytes_downloaded)
+        dl_size_str = f'{self.client.bytes_downloaded / 1e6:.1f}MB'
         print(f'DL:{dl_size_str}', progress_str, end='\r', file=sys.stderr)
 
     async def periodically_report_progress(self, done: asyncio.Event, period: float = 0.5):
