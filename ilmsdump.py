@@ -671,9 +671,7 @@ class Video(Downloadable):
 def generate_table(items):
     fields = [field.name for field in dataclasses.fields(items[0])]
     rows = [fields]
-    rows.extend(
-        [str(getattr(item, field)) for field in fields] for item in items
-    )
+    rows.extend([str(getattr(item, field)) for field in fields] for item in items)
     widths = [max(map(wcwidth.wcswidth, col)) for col in zip(*rows)]
     for i, row in enumerate(rows):
         for j, (width, cell) in enumerate(zip(widths, row)):
