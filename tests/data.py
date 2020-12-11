@@ -22,10 +22,19 @@ COURSE_40596 = ilmsdump.Course(
     is_admin=False,
 )
 
+# has only material
 COURSE_1808 = ilmsdump.Course(
     id=1808,
     serial='09810BMES525100',
     name='藥物控制釋放Drug Controlled Release',
+    is_admin=False,
+)
+
+# has only discussion
+COURSE_359 = ilmsdump.Course(
+    id=359,
+    serial='09810CL492400',
+    name='敦煌學Dunhuang Studies',
     is_admin=False,
 )
 
