@@ -13,9 +13,17 @@ async def get_client():
 
 
 @pytest.mark.asyncio
-async def test_anonymous():
+async def test_get_course_anonymous():
     async with get_client() as client:
         course = await client.get_course(46274)
         assert course.id == 46274
         assert course.name == '平行程式Parallel Programming'
         assert course.is_admin is False
+
+
+@pytest.mark.asyncio
+async def test_get_courses_anonymous():
+    async with get_client() as client:
+        with pytest.raises(ilmsdump.UserError):
+            async for course in client.get_courses():
+                pass
