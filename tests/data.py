@@ -66,3 +66,15 @@ MATERIAL_258234 = ilmsdump.Material(
     type='Epowercam',
     course=COURSE_74,
 )
+
+HOMEWORK_198377 = ilmsdump.Homework(
+    id=198377,
+    title='Lab1: Platform Introduction & MPI',
+    course=COURSE_40596,
+)
+
+HOMEWORK_200355 = ilmsdump.Homework(
+    id=200355,
+    title='Final Project',
+    course=COURSE_40596,
+)

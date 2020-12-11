@@ -31,3 +31,12 @@ async def test_get_materials():
 
         materials = [m async for m in data.COURSE_74.get_materials(client)]
         assert data.MATERIAL_258234 in materials
+
+
+@pytest.mark.asyncio
+async def test_get_homework():
+    async with utils.get_client() as client:
+        homeworks = [h async for h in data.COURSE_40596.get_homeworks(client)]
+
+    assert data.HOMEWORK_198377 in homeworks
+    assert data.HOMEWORK_200355 in homeworks
