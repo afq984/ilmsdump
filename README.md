@@ -4,8 +4,10 @@
 
 ## Installation
 
+Requirements: Python 3.7 or later
+
 ```
-pip install -U https://github.com/afq984/ilmsdump/archive/main.zip
+python -m pip install -U https://github.com/afq984/ilmsdump/archive/main.zip
 ```
 
 You may want to specify `--user`, or install in a [virtual environment].
