@@ -51,7 +51,7 @@ def as_sync(func):
     return wrapper
 
 
-@functools.lru_cache
+@functools.lru_cache()
 @as_sync
 async def _get_workaround_client_response_content_is_traced():
     is_traced = False
