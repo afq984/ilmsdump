@@ -1,9 +1,11 @@
 import os
 import contextlib
-import pytest
 import tempfile
 
 from typing import AsyncGenerator
+
+import pytest
+import yarl
 
 import ilmsdump
 
@@ -91,3 +93,9 @@ async def test_get_dir_for():
 
 def test_as_id_string():
     assert COURSE_74.as_id_string() == 'Course-74'
+
+
+def test_flatten_attribute():
+    assert ilmsdump.flatten_attribute(3) == 3
+    assert ilmsdump.flatten_attribute(yarl.URL('http://example.org')) == 'http://example.org'
+    assert ilmsdump.flatten_attribute(COURSE_74) == COURSE_74.as_id_string()
