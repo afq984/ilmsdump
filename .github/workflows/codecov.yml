@@ -1,4 +1,4 @@
-name: Coveralls
+name: codecov.io
 
 on: ["push", "pull_request"]
 
@@ -16,9 +16,8 @@ jobs:
     - name: Test
       continue-on-error: true
       run: |
-        python -m pytest --cov=ilmsdump tests
+        python -m pytest --cov=ilmsdump --cov-report=xml tests
 
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
+    - uses: codecov/codecov-action@v1
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        file: ./coverage.xml
