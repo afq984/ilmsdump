@@ -2,6 +2,8 @@ import contextlib
 import pytest
 import tempfile
 
+from typing import AsyncGenerator
+
 import ilmsdump
 
 
@@ -12,7 +14,7 @@ def test_qs_get():
 
 
 @contextlib.asynccontextmanager
-async def get_client():
+async def get_client() -> AsyncGenerator[ilmsdump.Client, None]:
     with tempfile.TemporaryDirectory() as tmpd:
         async with ilmsdump.Client(data_dir=tmpd) as client:
             yield client
