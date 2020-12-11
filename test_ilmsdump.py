@@ -5,6 +5,12 @@ import tempfile
 import ilmsdump
 
 
+def test_qs_get():
+    assert ilmsdump.qs_get('http://example.com/?a=b', 'a') == 'b'
+    with pytest.raises(KeyError):
+        ilmsdump.qs_get('http://example.com', 'a')
+
+
 @contextlib.asynccontextmanager
 async def get_client():
     with tempfile.TemporaryDirectory() as tmpd:
