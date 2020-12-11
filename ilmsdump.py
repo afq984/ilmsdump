@@ -364,6 +364,7 @@ def get_attachments(parent: Downloadable, element: lxml.html.HtmlElement) -> Ite
         title = a.attrib.get('title', a.text)
         yield Attachment(
             id=id_,
+            title=title,
             parent=parent,
         )
 
@@ -580,6 +581,7 @@ class Discussion(Downloadable):
                 for attachment in post['attach']:
                     yield Attachment(
                         id=int(attachment['id']),
+                        title=attachment['srcName'],
                         parent=self,
                     )
 
@@ -599,6 +601,7 @@ class Homework(Downloadable):
 @dataclasses.dataclass
 class Attachment(Downloadable):
     id: int
+    title: str
     parent: Downloadable
 
     async def download(self, client):
