@@ -46,6 +46,14 @@ async def test_get_courses_anonymous():
 
 
 @pytest.mark.asyncio
+async def test_get_course_authentication_required():
+    async with get_client() as client:
+        with pytest.raises(ilmsdump.UserError):
+            await client.get_course(43477)
+
+
+
+@pytest.mark.asyncio
 async def test_clear_credentials():
     async with get_client() as client:
         open(client.cred_path, 'w').close()
