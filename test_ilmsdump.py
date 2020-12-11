@@ -39,6 +39,9 @@ async def test_get_course_anonymous():
         course = await client.get_course(46274)
         assert course == COURSE_46274
 
+        course = await client.get_course(74)
+        assert course == COURSE_74
+
 
 @pytest.mark.asyncio
 async def test_get_course_anonymous_doesnt_exist():
