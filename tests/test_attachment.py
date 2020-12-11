@@ -26,7 +26,7 @@ HW3 成績已公佈
 async def test_download(client: ilmsdump.Client):
     assert [c async for c in data.ATTACHMENT_2616319.download(client)] == []
 
-    file = client.get_dir_for(data.ATTACHMENT_2616319) / 'data'
+    file = client.get_dir_for(data.ATTACHMENT_2616319) / 'announcement.txt'
     assert file.read_text(encoding='utf8') == ATTACHMENT_2616319_CONTENT
 
     assert client.bytes_downloaded == file.stat().st_size

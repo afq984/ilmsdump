@@ -643,13 +643,19 @@ class Attachment(Downloadable):
                 'id': self.id,
             },
         ) as response:
-            with (client.get_dir_for(self) / 'data').open('wb') as file:
+            with (client.get_dir_for(self) / self.suggest_filename()).open('wb') as file:
                 async for chunk in response.content.iter_any():
                     if not _workaround_client_response_content_is_traced:
                         client.bytes_downloaded += len(chunk)
                     file.write(chunk)
         return
         yield
+
+    def suggest_filename(self) -> str:
+        name = os.path.basename(self.title)
+        if name == 'meta.json':
+            return 'meta_.json'
+        return name
 
 
 @dataclasses.dataclass
