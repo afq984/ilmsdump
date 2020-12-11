@@ -42,6 +42,7 @@ setup(
         'dev': [
             'pytest',
             'pytest-asyncio',
+            'pytest-cov',
         ],
     },
     entry_points={
