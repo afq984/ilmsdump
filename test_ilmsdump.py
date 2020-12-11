@@ -67,3 +67,11 @@ async def test_clear_credentials():
 async def test_get_login_state_anonymous():
     async with get_client() as client:
         assert await client.get_login_state() is None
+
+
+@pytest.mark.asyncio
+async def test_get_dir_for():
+    async with get_client() as client:
+        course = await client.get_course(74)
+        dir_ = client.get_dir_for(course)
+        assert dir_.exists()
