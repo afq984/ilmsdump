@@ -53,3 +53,9 @@ async def test_clear_credentials():
         assert not os.path.exists(client.cred_path)
 
         assert client.clear_credentials() is False
+
+
+@pytest.mark.asyncio
+async def test_get_login_state_anonymous():
+    async with get_client() as client:
+        assert await client.get_login_state() is None
