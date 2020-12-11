@@ -33,3 +33,15 @@ ANNOUNCEMENT_2008652 = ilmsdump.Announcement(
     title='Final Project 分組',
     course=COURSE_40596,
 )
+
+DISCUSSION_258543 = ilmsdump.Discussion(
+    id=258543,
+    title='不能 srun - QOSMaxGRESMinutesPerJob',
+    course=COURSE_40596,
+)
+
+DISCUSSION_236608 = ilmsdump.Discussion(
+    id=236608,
+    title='誠徵final project組員',
+    course=COURSE_40596,
+)
