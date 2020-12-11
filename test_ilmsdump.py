@@ -1,3 +1,4 @@
+import os
 import contextlib
 import pytest
 import tempfile
@@ -35,3 +36,13 @@ async def test_get_courses_anonymous():
         with pytest.raises(ilmsdump.UserError):
             async for course in client.get_courses():
                 pass
+
+
+@pytest.mark.asyncio
+async def test_clear_credentials():
+    async with get_client() as client:
+        open(client.cred_path, 'w').close()
+        assert client.clear_credentials() is True
+        assert not os.path.exists(client.cred_path)
+
+        assert client.clear_credentials() is False
