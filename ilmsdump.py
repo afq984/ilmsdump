@@ -253,7 +253,6 @@ class Client:
         d.mkdir(parents=True, exist_ok=True)
         return d
 
-
 class Downloadable:
     async def download(self, client) -> AsyncGenerator['Downloadable', None]:
         return
@@ -263,14 +262,25 @@ class Downloadable:
         return f'{self.__class__.__name__}-{self.id}'
 
     def get_meta(self) -> dict:
-        def flatten(value):
-            if isinstance(value, Downloadable):
-                return value.as_id_string()
-            return value
-
         return {
-            field.name: flatten(getattr(self, field.name)) for field in dataclasses.fields(self)
+            field.name: flatten_attribute(getattr(self, field.name))
+            for field in dataclasses.fields(self)
         }
+
+
+@functools.singledispatch
+def flatten_attribute(value):
+    return value
+
+
+@flatten_attribute.register
+def _(value: Downloadable):
+    return value.as_id_string()
+
+
+@flatten_attribute.register
+def _(value: yarl.URL):
+    return str(value)
 
 
 @dataclasses.dataclass
