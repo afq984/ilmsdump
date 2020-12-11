@@ -773,7 +773,7 @@ async def main(course_ids, logout: bool, login: bool, output_dir: str):
                 print(end=''.join(generate_table(courses)))
                 await d.run(courses)
         if not changed:
-            print('Nothing to do')
+            click.echo('Nothing to do', err=True)
 
 
 if __name__ == '__main__':
