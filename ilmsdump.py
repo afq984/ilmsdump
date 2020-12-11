@@ -253,6 +253,7 @@ class Client:
         d.mkdir(parents=True, exist_ok=True)
         return d
 
+
 class Downloadable:
     async def download(self, client) -> AsyncGenerator['Downloadable', None]:
         return
