@@ -12,6 +12,41 @@ python -m pip install -U https://github.com/afq984/ilmsdump/archive/main.zip
 
 You may want to specify `--user`, or install in a [virtual environment].
 
+## Usage Examples
+
+### 登入
+
+```
+ilmsdump --login
+```
+
+重新登入：
+
+```
+ilmsdump --logout --login
+```
+
+### 匯出課程
+
+使用網址中的課程 Course ID 匯出 [0001](http://lms.nthu.edu.tw/course/74) 以及 [10910CS542200](http://lms.nthu.edu.tw/course/46274):
+
+```
+ilmsdump 74 46274
+```
+
+匯出所有修過的課：
+
+```
+ilmsdump enrolled
+```
+
+### 查看使用說明
+
+```
+ilmsdump --help
+```
+
+
 ## Features & Status
 
 > ✔️ supported; 🚧 work in progress; ❓ maybe; ❌ lack of interest or too complicated
@@ -46,8 +81,40 @@ You may want to specify `--user`, or install in a [virtual environment].
 *   小組專區 🚧
     *   討論 ❌
 
-See also: [自iLMS備份課程檔案-浮水印.pdf] [backup]
+### See Also
+
+[自iLMS備份課程檔案-浮水印.pdf] [backup]
 
 [virtual environment]: https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment
 [自iLMS備份課程檔案-浮水印.pdf]: http://lms.nthu.edu.tw/sys/read_attach.php?id=2470763
 [backup]: https://github.com/afq984/ilmsdump/blob/backup/%E8%87%AAiLMS%E5%82%99%E4%BB%BD%E8%AA%B2%E7%A8%8B%E6%AA%94%E6%A1%88-%E6%B5%AE%E6%B0%B4%E5%8D%B0.pdf
+
+
+## Development
+
+```
+cd ilmsdump
+pip install -e .[dev]
+```
+
+### Testing
+
+```
+pytest tests
+```
+
+### Linting
+
+```
+flake8 ilmsdump.py setup.py tests
+```
+
+### Format Code
+
+```
+black .
+```
+
+### Report Issues
+
+https://github.com/afq984/ilmsdump/issues
