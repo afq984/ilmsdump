@@ -1,5 +1,7 @@
 import pytest
 
+import ilmsdump
+
 from tests import data
 
 
@@ -55,3 +57,19 @@ async def test_get_homework(client):
 @pytest.mark.asyncio
 async def test_get_homework_empty(client):
     assert [h async for h in data.COURSE_1808.get_homeworks(client)] == []
+
+
+@pytest.mark.asyncio
+async def test_download(client: ilmsdump.Client):
+    items = [i async for i in data.COURSE_40596.download(client)]
+
+    assert (client.get_dir_for(data.COURSE_40596) / 'index.html').exists()
+
+    assert data.ANNOUNCEMENT_2008652 in items
+    assert data.ANNOUNCEMENT_2218728 in items
+    assert data.DISCUSSION_258543 in items
+    assert data.DISCUSSION_236608 in items
+    assert data.MATERIAL_2173495 in items
+    assert data.MATERIAL_2004666 in items
+    assert data.HOMEWORK_198377 in items
+    assert data.HOMEWORK_200355 in items
