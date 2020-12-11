@@ -672,7 +672,7 @@ def generate_table(items):
     fields = [field.name for field in dataclasses.fields(items[0])]
     rows = [fields]
     rows.extend(
-        [str(getattr(x := getattr(item, field), 'id', x)) for field in fields] for item in items
+        [str(getattr(item, field)) for field in fields] for item in items
     )
     widths = [max(map(wcwidth.wcswidth, col)) for col in zip(*rows)]
     for i, row in enumerate(rows):
