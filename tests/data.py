@@ -22,6 +22,13 @@ COURSE_40596 = ilmsdump.Course(
     is_admin=False,
 )
 
+COURSE_1808 = ilmsdump.Course(
+    id=1808,
+    serial='09810BMES525100',
+    name='藥物控制釋放Drug Controlled Release',
+    is_admin=False,
+)
+
 ANNOUNCEMENT_2218728 = ilmsdump.Announcement(
     id=2218728,
     title='HW3 成績公佈',

@@ -11,14 +11,10 @@ from tests import data
 @pytest.mark.asyncio
 async def test_get_course_anonymous():
     async with utils.get_client() as client:
-        course = await client.get_course(46274)
-        assert course == data.COURSE_46274
-
-        course = await client.get_course(74)
-        assert course == data.COURSE_74
-
-        course = await client.get_course(40596)
-        assert course == data.COURSE_40596
+        assert await client.get_course(46274) == data.COURSE_46274
+        assert await client.get_course(74) == data.COURSE_74
+        assert await client.get_course(40596) == data.COURSE_40596
+        assert await client.get_course(1808) == data.COURSE_1808
 
 
 @pytest.mark.asyncio
