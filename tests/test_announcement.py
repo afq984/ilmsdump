@@ -11,7 +11,11 @@ async def test_downlaod(client: ilmsdump.Client):
 
     assert (client.get_dir_for(data.ANNOUNCEMENT_2218728) / 'index.json').exists()
 
-    assert attachments == [data.ATTACHMENT_2616319, data.ATTACHMENT_2616320]
+    assert attachments == [
+        data.ATTACHMENT_2616319,
+        data.ATTACHMENT_2616320,
+        data.ATTACHMENT_2616322,
+    ]
 
 
 @pytest.mark.asyncio

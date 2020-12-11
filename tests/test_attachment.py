@@ -30,3 +30,11 @@ async def test_download(client: ilmsdump.Client):
     assert file.read_text(encoding='utf8') == ATTACHMENT_2616319_CONTENT
 
     assert client.bytes_downloaded == file.stat().st_size
+
+
+@pytest.mark.asyncio
+async def test_download_rename(client: ilmsdump.Client):
+    assert [c async for c in data.ATTACHMENT_2616322.download(client)] == []
+
+    assert not (client.get_dir_for(data.ATTACHMENT_2616322) / 'meta.json').exists()
+    assert (client.get_dir_for(data.ATTACHMENT_2616322) / 'meta_.json').exists()

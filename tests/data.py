@@ -58,6 +58,12 @@ ATTACHMENT_2616320 = ilmsdump.Attachment(
     parent=ANNOUNCEMENT_2218728,
 )
 
+ATTACHMENT_2616322 = ilmsdump.Attachment(
+    id=2616322,
+    title='meta.json',  # shall be renamed to meta_.json when saved
+    parent=ANNOUNCEMENT_2218728,
+)
+
 ANNOUNCEMENT_2008652 = ilmsdump.Announcement(
     id=2008652,
     title='Final Project 分組',
