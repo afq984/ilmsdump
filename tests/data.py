@@ -44,6 +44,18 @@ ANNOUNCEMENT_2218728 = ilmsdump.Announcement(
     course=COURSE_40596,
 )
 
+ATTACHMENT_2616319 = ilmsdump.Attachment(
+    id=2616319,
+    title='announcement.txt',
+    parent=ANNOUNCEMENT_2218728,
+)
+
+ATTACHMENT_2616320 = ilmsdump.Attachment(
+    id=2616320,
+    title='announcement_updated.txt',
+    parent=ANNOUNCEMENT_2218728,
+)
+
 ANNOUNCEMENT_2008652 = ilmsdump.Announcement(
     id=2008652,
     title='Final Project 分組',
