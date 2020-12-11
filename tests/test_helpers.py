@@ -1,5 +1,3 @@
-import textwrap
-
 import lxml.html
 import pytest
 import yarl
