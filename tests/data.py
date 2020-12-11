@@ -45,3 +45,24 @@ DISCUSSION_236608 = ilmsdump.Discussion(
     title='誠徵final project組員',
     course=COURSE_40596,
 )
+
+MATERIAL_2173495 = ilmsdump.Material(
+    id=2173495,
+    title='Chap12: Distributed Computing for DL',
+    type='Econtent',
+    course=COURSE_40596,
+)
+
+MATERIAL_2004666 = ilmsdump.Material(
+    id=2004666,
+    title='Syllabus',
+    type='Econtent',
+    course=COURSE_40596,
+)
+
+MATERIAL_258234 = ilmsdump.Material(
+    id=258234,
+    title='101學年度iLMS數位學習平台9/21應用課程錄影檔',
+    type='Epowercam',
+    course=COURSE_74,
+)
