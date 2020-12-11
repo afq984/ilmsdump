@@ -9,5 +9,8 @@ COURSE_74 = ilmsdump.Course(
 )
 
 COURSE_46274 = ilmsdump.Course(
-    id=46274, serial='10910CS542200', name='平行程式Parallel Programming', is_admin=False
+    id=46274,
+    serial='10910CS542200',
+    name='平行程式Parallel Programming',
+    is_admin=False,
 )
