@@ -14,3 +14,22 @@ COURSE_46274 = ilmsdump.Course(
     name='平行程式Parallel Programming',
     is_admin=False,
 )
+
+COURSE_40596 = ilmsdump.Course(
+    id=40596,
+    serial='10810CS542200',
+    name='平行程式Parallel Programming',
+    is_admin=False,
+)
+
+ANNOUNCEMENT_2218728 = ilmsdump.Announcement(
+    id=2218728,
+    title='HW3 成績公佈',
+    course=COURSE_40596,
+)
+
+ANNOUNCEMENT_2008652 = ilmsdump.Announcement(
+    id=2008652,
+    title='Final Project 分組',
+    course=COURSE_40596,
+)
