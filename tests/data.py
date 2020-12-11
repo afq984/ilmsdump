@@ -70,6 +70,18 @@ DISCUSSION_258543 = ilmsdump.Discussion(
     course=COURSE_40596,
 )
 
+ATTACHMENT_2134734 = ilmsdump.Attachment(
+    id=2134734,
+    title='hw4-2-QOSMaxGRESMinutesPerJob-srun.png',
+    parent=DISCUSSION_258543,
+)
+
+ATTACHMENT_2134738 = ilmsdump.Attachment(
+    id=2134738,
+    title='hw4-2-QOSMaxGRESMinutesPerJob.png',
+    parent=DISCUSSION_258543,
+)
+
 DISCUSSION_236608 = ilmsdump.Discussion(
     id=236608,
     title='誠徵final project組員',
