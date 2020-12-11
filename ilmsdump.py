@@ -259,6 +259,19 @@ class Downloadable:
         return
         yield
 
+    def as_id_string(self):
+        return f'{self.__class__.__name__}-{self.id}'
+
+    def get_meta(self) -> dict:
+        def flatten(value):
+            if isinstance(value, Downloadable):
+                return value.as_id_string()
+            return value
+
+        return {
+            field.name: flatten(getattr(self, field.name)) for field in dataclasses.fields(self)
+        }
+
 
 @dataclasses.dataclass
 class Stat:
@@ -280,9 +293,7 @@ class Downloader:
         self.stats = collections.defaultdict(Stat)
 
     def report_progress(self):
-        progress_str = ' '.join(
-            f'{k[:3]}:{v.completed}/{v.total}' for (k, v) in self.stats.items()
-        )
+        progress_str = ' '.join(f'{k[:3]}:{v.completed}/{v.total}' for (k, v) in self.stats.items())
         dl_size_str = format_size(self.client.bytes_downloaded)
         print(f'DL:{dl_size_str}', progress_str, end='\r', file=sys.stderr)
 
@@ -305,9 +316,20 @@ class Downloader:
             item = items.popleft()
 
             try:
+                item_children = []
                 async for child in item.download(self.client):
                     items.append(child)
+                    item_children.append(child.as_id_string())
                     self.stats[child.__class__.__name__].total += 1
+
+                with (self.client.get_dir_for(item) / 'meta.json').open('w') as file:
+                    json.dump(
+                        {
+                            **item.get_meta(),
+                            'children': item_children,
+                        },
+                        file,
+                    )
             except Exception:
                 raise Exception(f'Error occurred while handling {item}')
 
