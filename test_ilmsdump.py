@@ -87,3 +87,7 @@ async def test_get_dir_for():
         course = COURSE_74
         dir_ = client.get_dir_for(course)
         assert dir_.exists()
+
+
+def test_as_id_string():
+    assert COURSE_74.as_id_string() == 'Course-74'
