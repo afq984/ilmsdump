@@ -1,13 +1,12 @@
 import tempfile
-import contextlib
 
-from typing import AsyncGenerator
+import pytest
 
 import ilmsdump
 
 
-@contextlib.asynccontextmanager
-async def get_client() -> AsyncGenerator[ilmsdump.Client, None]:
+@pytest.fixture(scope='function')
+async def client():
     with tempfile.TemporaryDirectory() as tmpd:
         async with ilmsdump.Client(data_dir=tmpd) as client:
             yield client
