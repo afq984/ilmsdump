@@ -72,6 +72,6 @@ async def test_get_login_state_anonymous():
 @pytest.mark.asyncio
 async def test_get_dir_for():
     async with get_client() as client:
-        course = await client.get_course(74)
+        course = ilmsdump.Course(id=74, name='example', is_admin=False)
         dir_ = client.get_dir_for(course)
         assert dir_.exists()
