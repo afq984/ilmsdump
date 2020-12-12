@@ -12,7 +12,7 @@ import getpass
 import dataclasses
 import contextlib
 
-from typing import List, Union, AsyncGenerator, Iterable
+from typing import List, Union, AsyncGenerator, Iterable, Awaitable
 
 import aiohttp
 import yarl
@@ -48,6 +48,28 @@ def as_sync(func):
     def wrapper(*args, **kwargs):
         return asyncio.run(func(*args, **kwargs))
 
+    return wrapper
+
+
+class _EmptyAsyncGenerator:
+    def __init__(self, coro: Awaitable):
+        self._done = False
+        self._coro = coro
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        if not self._done:
+            self._done = True
+            await self._coro
+        raise StopAsyncIteration
+
+
+def as_empty_async_generator(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return _EmptyAsyncGenerator(func(*args, **kwargs))
     return wrapper
 
 
@@ -273,9 +295,9 @@ class Client:
 
 
 class Downloadable:
+    @as_empty_async_generator
     async def download(self, client) -> AsyncGenerator['Downloadable', None]:
-        return
-        yield
+        pass
 
     def as_id_string(self):
         return f'{self.__class__.__name__}-{self.id}'
@@ -673,6 +695,7 @@ class Score(Downloadable):
     def id(self):
         return self.course.id
 
+    @as_empty_async_generator
     async def download(self, client: Client):
         async with client.session.get(
             'http://lms.nthu.edu.tw/course.php',
@@ -686,8 +709,6 @@ class Score(Downloadable):
 
             with (client.get_dir_for(self) / 'index.html').open('wb') as file:
                 file.write(lxml.html.tostring(main))
-        return
-        yield
 
 
 @dataclasses.dataclass
@@ -696,6 +717,7 @@ class Attachment(Downloadable):
     title: str
     parent: Downloadable
 
+    @as_empty_async_generator
     async def download(self, client):
         async with client.session.get(
             'http://lms.nthu.edu.tw/sys/read_attach.php',
@@ -708,8 +730,6 @@ class Attachment(Downloadable):
                     if not _workaround_client_response_content_is_traced:
                         client.bytes_downloaded += len(chunk)
                     file.write(chunk)
-        return
-        yield
 
     def suggest_filename(self) -> str:
         name = os.path.basename(self.title)
@@ -723,6 +743,7 @@ class Video(Downloadable):
     id: int
     url: yarl.URL
 
+    @as_empty_async_generator
     async def download(self, client):
         async with client.session.get(self.url) as response:
             with (client.get_dir_for(self) / 'video.mp4').open('wb') as file:
@@ -730,8 +751,6 @@ class Video(Downloadable):
                     if not _workaround_client_response_content_is_traced:
                         client.bytes_downloaded += len(chunk)
                     file.write(chunk)
-        return
-        yield
 
 
 def generate_table(items):

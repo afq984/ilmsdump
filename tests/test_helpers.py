@@ -47,3 +47,16 @@ id    serial           name                                 is_admin
 359   09810CL492400    敦煌學Dunhuang Studies               False\x20\x20\x20
 '''
     assert expected == table
+
+
+@pytest.mark.asyncio
+async def test_empty_async_generator():
+    called = 0
+
+    @ilmsdump.as_empty_async_generator
+    async def agen():
+        nonlocal called
+        called += True
+
+    assert [_ async for _ in agen()] == []
+    assert called == 1
