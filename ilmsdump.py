@@ -640,7 +640,7 @@ class Homework(Downloadable):
         ) as response:
             html = lxml.html.fromstring(await response.read())
         main = html_get_main(html)
-        for to_remove in main.xpath('.//div[@class="toolWrapper"]'):
+        for to_remove in main.xpath('.//span[@class="toolWrapper"]'):
             to_remove.getparent().remove(to_remove)
 
         for attachment in get_attachments(self, main):
