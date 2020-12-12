@@ -289,7 +289,7 @@ class Client:
                     is_admin=is_admin,
                 )
 
-    async def get_open_courses(self) -> AsyncGenerator['Course', None]:
+    async def get_open_courses(self, semester_id=-1) -> AsyncGenerator['Course', None]:
         page = 1
         total_pages = 1
         while page <= total_pages:
@@ -299,13 +299,18 @@ class Client:
                 params={
                     'nav': 'course',
                     't': 'open',
+                    'term': semester_id,
                     'page': page,
                 },
             ) as response:
                 html = lxml.html.fromstring(await response.read())
 
-            (total_pages_str,) = html.xpath('//input[@id="PageCombo"]/following-sibling::text()')
-            total_pages = int(total_pages_str.rpartition('/')[2])
+            total_pages_strs = html.xpath('//input[@id="PageCombo"]/following-sibling::text()')
+            if total_pages_strs:
+                total_pages = int(total_pages_strs[0].rpartition('/')[2])
+            else:
+                for href in html.xpath('//span[@class="page"]/span[@class="item"]/a/@href'):
+                    total_pages = max(total_pages, int(qs_get(href, 'page')))
 
             for a in html.xpath('//div[@class="tableBox"]//a[starts-with(@href, "/course/")]'):
                 id_ = int(os.path.basename(a.attrib['href']))

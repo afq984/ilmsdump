@@ -53,3 +53,12 @@ async def test_get_dir_for(client):
     course = data.COURSE_74
     dir_ = client.get_dir_for(course)
     assert dir_.exists()
+
+
+@pytest.mark.asyncio
+async def test_get_open_courses(client: ilmsdump.Client):
+    courses = [c async for c in client.get_open_courses(semester_id=38)]
+
+    assert data.COURSE_40596 in courses
+    assert len(courses) > 20
+    assert all(isinstance(c, ilmsdump.Course) for c in courses)
