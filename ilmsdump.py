@@ -289,6 +289,41 @@ class Client:
                     is_admin=is_admin,
                 )
 
+    async def get_open_courses(self) -> AsyncGenerator['Course', None]:
+        page = 1
+        total_pages = 1
+        while page <= total_pages:
+            print(end=f'\rIndexing open courses: page {page} of {total_pages}', file=sys.stderr)
+            async with self.session.get(
+                'http://lms.nthu.edu.tw/course/index.php',
+                params={
+                    'nav': 'course',
+                    't': 'open',
+                    'page': page,
+                },
+            ) as response:
+                html = lxml.html.fromstring(await response.read())
+
+            (total_pages_str,) = html.xpath('//input[@id="PageCombo"]/following-sibling::text()')
+            total_pages = int(total_pages_str.rpartition('/')[2])
+
+            for a in html.xpath('//div[@class="tableBox"]//a[starts-with(@href, "/course/")]'):
+                id_ = int(os.path.basename(a.attrib['href']))
+                title = a.text
+                serial_div = a.getparent().getprevious()[0]
+                assert serial_div.tag == 'div'
+                assert serial_div.attrib['title'] == serial_div.text
+                serial = serial_div.text
+                yield Course(
+                    id=id_,
+                    serial=serial,
+                    name=title,
+                    is_admin=False,
+                )
+
+            page += 1
+        print()
+
     def get_dir_for(self, item: 'Downloadable') -> pathlib.Path:
         d = self.data_dir / item.__class__.__name__.lower() / str(item.id)
         d.mkdir(parents=True, exist_ok=True)
@@ -892,6 +927,9 @@ async def foreach_course(
         if course_id == 'enrolled':
             async for course in client.get_enrolled_courses():
                 yield course
+        elif course_id == 'open':
+            async for course in client.get_open_courses():
+                yield course
         else:
             yield await client.get_course(int(course_id))
 
@@ -899,7 +937,7 @@ async def foreach_course(
 def validate_course_id(ctx, param, value: str):
     result: List[Union[str, int]] = []
     for course_id in value:
-        if course_id == 'enrolled':
+        if course_id in {'enrolled', 'open'}:
             result.append(course_id)
         elif not course_id.isdigit():
             raise click.BadParameter('must be a number or the string "enrolled"')
@@ -949,7 +987,7 @@ def validate_course_id(ctx, param, value: str):
 @click.option(
     '--dry',
     is_flag=True,
-    help='List matched courses only. Do not download'
+    help='List matched courses only. Do not download',
 )
 @click.argument(
     'course_ids',
