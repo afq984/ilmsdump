@@ -3,7 +3,7 @@ name: codecov.io
 on: ["push", "pull_request"]
 
 jobs:
-  build:
+  coverage:
     runs-on: ubuntu-latest
     steps:
 
