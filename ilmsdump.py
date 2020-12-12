@@ -946,6 +946,11 @@ def validate_course_id(ctx, param, value: str):
     multiple=True,
     help='Ignore specified classes',
 )
+@click.option(
+    '--dry',
+    is_flag=True,
+    help='List matched courses only. Do not download'
+)
 @click.argument(
     'course_ids',
     nargs=-1,
@@ -958,6 +963,7 @@ async def main(
     login: bool,
     anonymous: bool,
     output_dir: str,
+    dry: bool,
     ignore: list,
 ):
     async with Client(data_dir=output_dir) as client:
@@ -976,7 +982,8 @@ async def main(
             if courses:
                 changed = True
                 print(end=''.join(generate_table(courses)))
-                await d.run(courses, ignore=set(ignore))
+                if not dry:
+                    await d.run(courses, ignore=set(ignore))
         if not changed:
             click.echo('Nothing to do', err=True)
 
