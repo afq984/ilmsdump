@@ -392,9 +392,17 @@ class Downloader:
     def __init__(self, client: Client):
         self.client = client
         self.stats = collections.defaultdict(Stat)
+        self.fullstats = collections.Counter()
+
+    def mark_total(self, item):
+        self.stats[item.STATS_NAME].total += 1
+
+    def mark_completed(self, item):
+        self.stats[item.STATS_NAME].completed += 1
+        self.fullstats[item.__class__.__name__] += 1
 
     def report_progress(self):
-        progress_str = ' '.join(f'{k[:3]}:{v.completed}/{v.total}' for (k, v) in self.stats.items())
+        progress_str = ' '.join(f'{k}:{v.completed}/{v.total}' for (k, v) in self.stats.items())
         dl_size_str = f'{self.client.bytes_downloaded / 1e6:.1f}MB'
         print(f'DL:{dl_size_str}', progress_str, end='\r', file=sys.stderr)
 
@@ -412,10 +420,12 @@ class Downloader:
         return resume_file
 
     async def run(self, items, ignore=()):
+        print('--- Starting Download '.ljust(79, '-'))
+
         items = collections.deque(items)
 
         for item in items:
-            self.stats[item.__class__.__name__].total += 1
+            self.mark_total(item)
 
         done = asyncio.Event()
         report_progress_task = asyncio.create_task(self.periodically_report_progress(done))
@@ -429,23 +439,24 @@ class Downloader:
                     print(f'Interrupted. Run with --resume={resume_file} to resume download')
                     return
 
-                item = items.popleft()
+                item = items[0]
 
                 if item.__class__.__name__ in ignore:
+                    items.popleft()
                     continue
 
+                item_children = []
+
                 try:
-                    item_children = []
                     async for child in item.download(self.client):
-                        items.append(child)
-                        item_children.append(child.as_id_string())
-                        self.stats[child.__class__.__name__].total += 1
+                        item_children.append(child)
+                        self.mark_total(child)
 
                     with (self.client.get_dir_for(item) / 'meta.json').open('w') as file:
                         json.dump(
                             {
                                 **item.get_meta(),
-                                'children': item_children,
+                                'children': [c.as_id_string() for c in item_children],
                             },
                             file,
                         )
@@ -457,7 +468,9 @@ class Downloader:
                         f'Run with --resume={resume_file} to resume download'
                     )
 
-                self.stats[item.__class__.__name__].completed += 1
+                items.popleft()
+                items.extend(item_children)
+                self.mark_completed(item)
                 self.report_progress()
 
         done.set()
@@ -465,6 +478,9 @@ class Downloader:
 
         self.report_progress()
         print(file=sys.stderr)
+        print('--- Summary '.ljust(79, '-'))
+        for k, v in self.fullstats.items():
+            print(f'{k}: {v}')
 
 
 def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
@@ -517,6 +533,8 @@ class Course(Downloadable):
     serial: str  # 科號
     is_admin: bool
     name: str
+
+    STATS_NAME = 'Course'
 
     async def download(self, client):
         generators = [
@@ -649,6 +667,8 @@ class Announcement(Downloadable):
     title: str
     course: Course
 
+    STATS_NAME = 'Page'
+
     async def download(self, client: Client):
         async with client.session.post(
             'http://lms.nthu.edu.tw/home/http_event_select.php',
@@ -679,6 +699,8 @@ class Material(Downloadable):
     title: str
     type: str  # "Econtent" or "Epowercam"
     course: Course
+
+    STATS_NAME = 'Page'
 
     async def download(self, client: Client):
         async with client.session.get(
@@ -735,6 +757,8 @@ class Discussion(Downloadable):
     title: str
     course: Course
 
+    STATS_NAME = 'Page'
+
     async def download(self, client: Client):
         async with client.session.post(
             'http://lms.nthu.edu.tw/sys/lib/ajax/post.php',
@@ -765,6 +789,8 @@ class Homework(Downloadable):
     id: int
     title: str
     course: Course
+
+    STATS_NAME = 'Page'
 
     async def download(self, client: Client):
         # homework description
@@ -856,6 +882,8 @@ class SubmittedHomework(Downloadable):
     course: Course
     comment: Optional[str] = None
 
+    STATS_NAME = 'Page'
+
     async def download(self, client: Client):
         retries = 3
         sleep_duration = 5
@@ -896,6 +924,8 @@ class SubmittedHomework(Downloadable):
 @dataclasses.dataclass
 class SinglePageDownloadable(Downloadable):
     course: Course
+
+    STATS_NAME = 'Page'
 
     @property
     def id(self):
@@ -939,6 +969,8 @@ class Attachment(Downloadable):
     title: str
     parent: Downloadable
 
+    STATS_NAME = 'File'
+
     @as_empty_async_generator
     async def download(self, client):
         async with client.session.get(
@@ -964,6 +996,8 @@ class Attachment(Downloadable):
 class Video(Downloadable):
     id: int
     url: yarl.URL
+
+    STATS_NAME = 'File'
 
     @as_empty_async_generator
     async def download(self, client):
