@@ -65,6 +65,16 @@ async def test_get_score_empty(client):
 
 
 @pytest.mark.asyncio
+async def test_get_grouplist(client):
+    assert [g async for g in data.COURSE_40596.get_grouplists(client)] == [data.GROUPLIST_40596]
+
+
+@pytest.mark.asyncio
+async def test_get_grouplist_empty(client):
+    assert [g async for g in data.COURSE_1808.get_grouplists(client)] == []
+
+
+@pytest.mark.asyncio
 async def test_download(client: ilmsdump.Client):
     items = [i async for i in data.COURSE_40596.download(client)]
 
@@ -78,3 +88,4 @@ async def test_download(client: ilmsdump.Client):
     assert data.MATERIAL_2004666 in items
     assert data.HOMEWORK_198377 in items
     assert data.HOMEWORK_200355 in items
+    assert data.GROUPLIST_40596 in items

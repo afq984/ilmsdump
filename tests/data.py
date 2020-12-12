@@ -155,3 +155,7 @@ HOMEWORK_200355 = ilmsdump.Homework(
     title='Final Project',
     course=COURSE_40596,
 )
+
+GROUPLIST_40596 = ilmsdump.GroupList(
+    course=COURSE_40596,
+)

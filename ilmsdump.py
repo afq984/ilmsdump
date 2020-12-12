@@ -70,6 +70,7 @@ def as_empty_async_generator(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         return _EmptyAsyncGenerator(func(*args, **kwargs))
+
     return wrapper
 
 
@@ -403,6 +404,15 @@ def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
     return main
 
 
+def table_is_empty(html: lxml.html.HtmlElement) -> bool:
+    second_row_tds = html.xpath('//div[@class="tableBox"]/table/tr[2]/td')
+    if len(second_row_tds) == 1:
+        # 目前尚無資料 or No Data
+        assert second_row_tds[0].text in ('目前尚無資料', 'No Data')
+        return True
+    return False
+
+
 def get_attachments(parent: Downloadable, element: lxml.html.HtmlElement) -> Iterable['Attachment']:
     ids = set()
     for a in element.xpath('.//a[starts-with(@href, "/sys/read_attach.php")]'):
@@ -435,6 +445,7 @@ class Course(Downloadable):
             self.get_discussions(client),
             self.get_homeworks(client),
             self.get_scores(client),
+            self.get_grouplists(client),
         ]
         for generator in generators:
             async for item in generator:
@@ -467,10 +478,7 @@ class Course(Downloadable):
             ) as response:
                 html = lxml.html.fromstring(await response.read())
 
-                second_row_tds = html.xpath('//div[@class="tableBox"]/table/tr[2]/td')
-                if len(second_row_tds) == 1:
-                    # 目前尚無資料 or No Data
-                    assert second_row_tds[0].text in ('目前尚無資料', 'No Data')
+                if table_is_empty(html):
                     break
 
                 yield html
@@ -528,7 +536,7 @@ class Course(Downloadable):
 
     async def get_scores(self, client) -> AsyncGenerator['Score', None]:
         async with client.session.get(
-            'http://lms.nthu.edu.tw/course.php?courseID',
+            'http://lms.nthu.edu.tw/course.php',
             params={
                 'f': 'score',
                 'courseID': self.id,
@@ -539,6 +547,18 @@ class Course(Downloadable):
                 '//div[@id="main"]//input[@type="button" and @onclick="history.back()"]'
             ):
                 yield Score(course=self)
+
+    async def get_grouplists(self, client) -> AsyncGenerator['GroupList', None]:
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'f': 'grouplist',
+                'courseID': self.id,
+            },
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
+            if not table_is_empty(html):
+                yield GroupList(course=self)
 
 
 @dataclasses.dataclass
@@ -713,6 +733,10 @@ class SinglePageDownloadable(Downloadable):
 
 class Score(SinglePageDownloadable):
     extra_params = {'f': 'score'}
+
+
+class GroupList(SinglePageDownloadable):
+    extra_params = {'f': 'grouplist'}
 
 
 @dataclasses.dataclass
