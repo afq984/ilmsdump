@@ -1,3 +1,6 @@
+import os
+import signal
+
 import lxml.html
 import pytest
 import yarl
@@ -60,3 +63,11 @@ async def test_empty_async_generator():
 
     assert [_ async for _ in agen()] == []
     assert called == 1
+
+
+@pytest.mark.asyncio
+async def test_capture_keyboard_interrupt():
+    with ilmsdump.capture_keyboard_interrupt() as interrupted:
+        assert not interrupted.is_set()
+        os.kill(0, signal.SIGINT)
+        assert interrupted.is_set()

@@ -6,6 +6,8 @@ import types
 import json
 import pathlib
 import collections
+import hashlib
+import signal
 import functools
 import itertools
 import asyncio
@@ -73,6 +75,20 @@ def as_empty_async_generator(func):
         return _EmptyAsyncGenerator(func(*args, **kwargs))
 
     return wrapper
+
+
+@contextlib.contextmanager
+def capture_keyboard_interrupt() -> Iterable[asyncio.Event]:
+    event = asyncio.Event()
+
+    def handler(signum, frame):
+        event.set()
+
+    old_handler = signal.signal(signal.SIGINT, handler)
+    try:
+        yield event
+    finally:
+        signal.signal(signal.SIGINT, old_handler)
 
 
 @functools.lru_cache()
@@ -388,6 +404,13 @@ class Downloader:
                 await asyncio.wait_for(done.wait(), period)
             self.report_progress()
 
+    def create_resume_file(self, data):
+        b = pickle.dumps(data)
+        sha256 = hashlib.sha256(b).hexdigest()
+        resume_file = self.client.data_dir / f'resume-{sha256[:7]}.pickle'
+        resume_file.write_bytes(b)
+        return resume_file
+
     async def run(self, items, ignore=()):
         items = collections.deque(items)
 
@@ -397,39 +420,45 @@ class Downloader:
         done = asyncio.Event()
         report_progress_task = asyncio.create_task(self.periodically_report_progress(done))
 
-        while items:
-            item = items.popleft()
+        with capture_keyboard_interrupt() as interrupted:
 
-            if item.__class__.__name__ in ignore:
-                continue
+            while items:
+                if interrupted.is_set():
+                    print(file=sys.stderr)
+                    resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
+                    print(f'Interrupted. Run with --resume={resume_file} to resume download')
+                    return
 
-            try:
-                item_children = []
-                async for child in item.download(self.client):
-                    items.append(child)
-                    item_children.append(child.as_id_string())
-                    self.stats[child.__class__.__name__].total += 1
+                item = items.popleft()
 
-                with (self.client.get_dir_for(item) / 'meta.json').open('w') as file:
-                    json.dump(
-                        {
-                            **item.get_meta(),
-                            'children': item_children,
-                        },
-                        file,
+                if item.__class__.__name__ in ignore:
+                    continue
+
+                try:
+                    item_children = []
+                    async for child in item.download(self.client):
+                        items.append(child)
+                        item_children.append(child.as_id_string())
+                        self.stats[child.__class__.__name__].total += 1
+
+                    with (self.client.get_dir_for(item) / 'meta.json').open('w') as file:
+                        json.dump(
+                            {
+                                **item.get_meta(),
+                                'children': item_children,
+                            },
+                            file,
+                        )
+                except Exception:
+                    items.appendleft(item)
+                    resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
+                    raise Exception(
+                        f'Error occurred while handling {item}\n'
+                        f'Run with --resume={resume_file} to resume download'
                     )
-            except Exception:
-                items.appendleft(item)
-                resume_file = self.client.data_dir / 'resume.pickle'
-                with resume_file.open('wb') as file:
-                    pickle.dump(dict(items=items, ignore=ignore), file)
-                raise Exception(
-                    f'Error occurred while handling {item}\n'
-                    f'Run with --resume={resume_file} to resume download'
-                )
 
-            self.stats[item.__class__.__name__].completed += 1
-            self.report_progress()
+                self.stats[item.__class__.__name__].completed += 1
+                self.report_progress()
 
         done.set()
         await report_progress_task
