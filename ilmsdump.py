@@ -347,7 +347,7 @@ class Downloader:
                 await asyncio.wait_for(done.wait(), period)
             self.report_progress()
 
-    async def run(self, items):
+    async def run(self, items, ignore=()):
         items = collections.deque(items)
 
         for item in items:
@@ -358,6 +358,9 @@ class Downloader:
 
         while items:
             item = items.popleft()
+
+            if item.__class__.__name__ in ignore:
+                continue
 
             try:
                 item_children = []
@@ -714,7 +717,7 @@ class Homework(Downloadable):
                 'courseID': self.course.id,
                 'f': 'hw_doclist',
                 'hw': self.id,
-            }
+            },
         ) as response:
             html = lxml.html.fromstring(await response.read())
 
@@ -938,13 +941,25 @@ def validate_course_id(ctx, param, value: str):
     show_default=True,
     help='Output directory to store login credentials and downloads',
 )
+@click.option(
+    '--ignore',
+    multiple=True,
+    help='Ignore specified classes',
+)
 @click.argument(
     'course_ids',
     nargs=-1,
     callback=validate_course_id,
 )
 @as_sync
-async def main(course_ids, logout: bool, login: bool, anonymous: bool, output_dir: str):
+async def main(
+    course_ids,
+    logout: bool,
+    login: bool,
+    anonymous: bool,
+    output_dir: str,
+    ignore: list,
+):
     async with Client(data_dir=output_dir) as client:
         d = Downloader(client=client)
         changed = False
@@ -961,7 +976,7 @@ async def main(course_ids, logout: bool, login: bool, anonymous: bool, output_di
             if courses:
                 changed = True
                 print(end=''.join(generate_table(courses)))
-                await d.run(courses)
+                await d.run(courses, ignore=set(ignore))
         if not changed:
             click.echo('Nothing to do', err=True)
 
