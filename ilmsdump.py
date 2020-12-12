@@ -473,8 +473,8 @@ class Course(Downloadable):
 
     id: int
     serial: str  # 科號
-    name: str
     is_admin: bool
+    name: str
 
     async def download(self, client):
         generators = [
@@ -907,7 +907,8 @@ def generate_table(items):
             if j:
                 yield '  '
             yield cell
-            yield ' ' * (width - wcwidth.wcswidth(cell))
+            if j + 1 < len(row):
+                yield ' ' * (width - wcwidth.wcswidth(cell))
         yield '\n'
         if i == 0:
             for j, width in enumerate(widths):

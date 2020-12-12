@@ -40,11 +40,11 @@ def test_generate_table():
         )
     )
     expected = '''\
-id    serial           name                                 is_admin
-----  ---------------  -----------------------------------  --------
-74    0001             iLMS平台線上客服專區                 False\x20\x20\x20
-1808  09810BMES525100  藥物控制釋放Drug Controlled Release  False\x20\x20\x20
-359   09810CL492400    敦煌學Dunhuang Studies               False\x20\x20\x20
+id    serial           is_admin  name
+----  ---------------  --------  -----------------------------------
+74    0001             False     iLMS平台線上客服專區
+1808  09810BMES525100  False     藥物控制釋放Drug Controlled Release
+359   09810CL492400    False     敦煌學Dunhuang Studies
 '''
     assert expected == table
 
