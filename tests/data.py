@@ -48,6 +48,22 @@ COURSE_38353 = ilmsdump.Course(
     name='中級日語二Intermediate Japanese II',
 )
 
+# With open homework
+COURSE_43492 = ilmsdump.Course(
+    id=43492,
+    serial='10820CS542100',
+    is_admin=False,
+    name='雲端計算Cloud Computing',
+)
+
+# With open group homework
+COURSE_5430 = ilmsdump.Course(
+    id=5430,
+    serial='09910TM200202',
+    is_admin=False,
+    name='管理學Management',
+)
+
 ANNOUNCEMENT_2218728 = ilmsdump.Announcement(
     id=2218728,
     title='HW3 成績公佈',
@@ -162,6 +178,46 @@ HOMEWORK_200355 = ilmsdump.Homework(
     id=200355,
     title='Final Project',
     course=COURSE_40596,
+)
+
+# Open homework submission
+HOMEWORK_220144 = ilmsdump.Homework(
+    id=220144,
+    title='Slides for paper presentation',
+    course=COURSE_43492,
+)
+
+SUBMITTED_2474481 = ilmsdump.SubmittedHomework(
+    id=2474481,
+    title='105062321',
+    by='\u9673\u5f18\u6b23',
+    course=COURSE_43492,
+)
+
+ATTACHMENT_2406879 = ilmsdump.Attachment(
+    id=2406879,
+    title='105062321.pdf',
+    parent=SUBMITTED_2474481,
+)
+
+# Open group homework submission
+HOMEWORK_18264 = ilmsdump.Homework(
+    id=18264,
+    title='第五章(G1)',
+    course=COURSE_5430,
+)
+
+SUBMITTED_59376 = ilmsdump.SubmittedHomework(
+    id=59376,
+    title='管理學報告ppt_ch5',
+    by='第 1 組',
+    course=COURSE_5430,
+)
+
+ATTACHMENT_49113 = ilmsdump.Attachment(
+    id=49113,
+    title='管理學報告.pptx',
+    parent=SUBMITTED_59376,
 )
 
 # open submission

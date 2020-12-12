@@ -828,15 +828,32 @@ class SubmittedHomework(Downloadable):
     comment: Optional[str] = None
 
     async def download(self, client: Client):
-        async with client.session.get(
-            'http://lms.nthu.edu.tw/course.php',
-            params={
-                'courseID': self.course.id,
-                'f': 'doc',
-                'cid': self.id,
-            },
-        ) as response:
-            html = lxml.html.fromstring(await response.read())
+        retries = 3
+        sleep_duration = 5
+        while True:
+            try:
+                async with client.session.get(
+                    'http://lms.nthu.edu.tw/course.php',
+                    params={
+                        'courseID': self.course.id,
+                        'f': 'doc',
+                        'cid': self.id,
+                    },
+                ) as response:
+                    html = lxml.html.fromstring(await response.read())
+            except aiohttp.ClientResponseError as exc:
+                if not retries:
+                    raise
+                if exc.status != 400:
+                    raise
+                client.log()
+                client.log(f'Exception occurred: {exc}')
+                client.log(f'Sleeping for {sleep_duration} and retrying {retries}')
+                await asyncio.sleep(sleep_duration)
+                sleep_duration *= 2
+                retries -= 1
+            else:
+                break
 
         main = html_get_main(html)
 

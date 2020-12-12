@@ -6,7 +6,7 @@ from tests import data
 
 
 @pytest.mark.asyncio
-async def test_downlaod(client: ilmsdump.Client):
+async def test_download(client: ilmsdump.Client):
     attachments = [a async for a in data.HOMEWORK_201015.download(client)]
 
     assert (client.get_dir_for(data.HOMEWORK_201015) / 'index.html').exists()
@@ -45,3 +45,15 @@ async def test_download_multiple_div_id_main(client: ilmsdump.Client):
     [a async for a in data.HOMEWORK_183084.download(client)]
 
     assert (client.get_dir_for(data.HOMEWORK_183084) / 'index.html').exists()
+
+
+@pytest.mark.asyncio
+async def test_download_open_submission(client: ilmsdump.Client):
+    children = [c async for c in data.HOMEWORK_220144.download(client)]
+
+    assert data.SUBMITTED_2474481 in children
+
+
+@pytest.mark.asyncio
+async def test_download_open_group_submission(client: ilmsdump.Client):
+    assert [c async for c in data.HOMEWORK_18264.download(client)] == [data.SUBMITTED_59376]
