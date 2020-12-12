@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import pickle
 import types
 import json
 import pathlib
@@ -418,7 +419,14 @@ class Downloader:
                         file,
                     )
             except Exception:
-                raise Exception(f'Error occurred while handling {item}')
+                items.appendleft(item)
+                resume_file = self.client.data_dir / 'resume.pickle'
+                with resume_file.open('wb') as file:
+                    pickle.dump(dict(items=items, ignore=ignore), file)
+                raise Exception(
+                    f'Error occurred while handling {item}\n'
+                    f'Run with --resume={resume_file} to resume download'
+                )
 
             self.stats[item.__class__.__name__].completed += 1
             self.report_progress()
@@ -816,8 +824,8 @@ class SubmittedHomework(Downloadable):
     id: int
     title: str
     by: str
-    comment: Optional[str]
     course: Course
+    comment: Optional[str] = None
 
     async def download(self, client: Client):
         async with client.session.get(
@@ -1015,6 +1023,11 @@ def validate_course_id(ctx, param, value: str):
     is_flag=True,
     help='List matched courses only. Do not download',
 )
+@click.option(
+    '--resume',
+    metavar='FILE',
+    help='Resume download',
+)
 @click.argument(
     'course_ids',
     nargs=-1,
@@ -1028,6 +1041,7 @@ async def main(
     anonymous: bool,
     output_dir: str,
     dry: bool,
+    resume: str,
     ignore: list,
 ):
     async with Client(data_dir=output_dir) as client:
@@ -1040,7 +1054,11 @@ async def main(
             await client.ensure_authenticated(prompt=login)
             changed |= login
 
-        if course_ids:
+        if resume is not None:
+            with open(resume, 'rb') as file:
+                await d.run(**pickle.load(file))
+                changed = True
+        elif course_ids:
             courses = [course async for course in foreach_course(client, course_ids)]
 
             if courses:
