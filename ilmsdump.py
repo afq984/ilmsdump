@@ -787,7 +787,8 @@ class Homework(Downloadable):
             else:
                 comment = None
 
-            (by,) = tr[iname].xpath('div/text()')
+            # Group homework may hide behind a <a>
+            (by,) = tr[iname].xpath('div/text()|div/a/text()')
 
             yield SubmittedHomework(
                 id=id_,
