@@ -171,7 +171,6 @@ HOMEWORK_182409 = ilmsdump.Homework(
     course=COURSE_38353,
 )
 
-
 # multiple div[@id="main"]
 HOMEWORK_183084 = ilmsdump.Homework(
     id=183084,

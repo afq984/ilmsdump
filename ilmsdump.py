@@ -819,6 +819,25 @@ class SubmittedHomework(Downloadable):
     comment: Optional[str]
     course: Course
 
+    async def download(self, client: Client):
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': self.course.id,
+                'f': 'doc',
+                'cid': self.id,
+            },
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
+
+        main = html_get_main(html)
+
+        for attachment in get_attachments(self, main):
+            yield attachment
+
+        with (client.get_dir_for(self) / 'index.html').open('wb') as file:
+            file.write(lxml.html.tostring(main))
+
 
 @dataclasses.dataclass
 class SinglePageDownloadable(Downloadable):
