@@ -12,7 +12,7 @@ import getpass
 import dataclasses
 import contextlib
 
-from typing import List, Union, AsyncGenerator, Iterable, Awaitable
+from typing import List, Union, AsyncGenerator, Iterable, Awaitable, Optional
 
 import aiohttp
 import yarl
@@ -687,6 +687,7 @@ class Homework(Downloadable):
     course: Course
 
     async def download(self, client: Client):
+        # homework description
         async with client.session.get(
             'http://lms.nthu.edu.tw/course.php',
             params={
@@ -705,6 +706,74 @@ class Homework(Downloadable):
 
         with (client.get_dir_for(self) / 'index.html').open('wb') as file:
             file.write(lxml.html.tostring(main))
+
+        # submitted homework
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': self.course.id,
+                'f': 'hw_doclist',
+                'hw': self.id,
+            }
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
+
+        if table_is_empty(html):
+            return
+
+        (header_tr,) = html.xpath('//div[@class="tableBox"]//tr[@class="header"]')
+        field_indexes = {}
+        for i, td in enumerate(header_tr):
+            try:
+                (a,) = td.xpath('a')
+            except ValueError:
+                continue
+            field_indexes[qs_get(a.attrib['href'], 'order')] = i
+
+        ititle = field_indexes['title']
+        assert ititle == 1
+        iname = field_indexes['name']
+        assert iname > ititle
+
+        for tr in html.xpath('//div[@class="tableBox"]//tr[@class!="header"]'):
+            a_s = tr[ititle].xpath('div/a')
+            if not a_s:
+                continue
+            (a,) = a_s
+            id_ = int(qs_get(a.attrib['href'], 'cid'))
+            title = a.text
+
+            comments = tr[ititle].xpath('div/img[@src="/sys/res/icon/hw_comment.png"]/@title')
+            if comments:
+                (comment,) = comments
+            else:
+                comment = None
+
+            (by,) = tr[iname].xpath('div/text()')
+
+            yield SubmittedHomework(
+                id=id_,
+                title=title,
+                by=by,
+                comment=comment,
+                course=self.course,
+            )
+
+        with (client.get_dir_for(self) / 'list.html').open('wb') as file:
+            file.write(lxml.html.tostring(html))
+
+
+@dataclasses.dataclass
+class SubmittedHomework(Downloadable):
+    """
+    作業 -> 已交名單 -> 標題[點進去]
+    """
+
+    id: int
+    title: str
+    by: str
+    comment: Optional[str]
+    course: Course
 
 
 @dataclasses.dataclass
