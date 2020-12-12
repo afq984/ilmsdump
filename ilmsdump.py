@@ -688,7 +688,7 @@ class Homework(Downloadable):
 
 
 @dataclasses.dataclass
-class Score(Downloadable):
+class SinglePageDownloadable(Downloadable):
     course: Course
 
     @property
@@ -701,7 +701,7 @@ class Score(Downloadable):
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'courseID': self.course.id,
-                'f': 'score',
+                **self.extra_params,
             },
         ) as response:
             html = lxml.html.fromstring(await response.read())
@@ -709,6 +709,10 @@ class Score(Downloadable):
 
             with (client.get_dir_for(self) / 'index.html').open('wb') as file:
                 file.write(lxml.html.tostring(main))
+
+
+class Score(SinglePageDownloadable):
+    extra_params = {'f': 'score'}
 
 
 @dataclasses.dataclass
