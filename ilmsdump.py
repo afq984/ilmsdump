@@ -765,7 +765,7 @@ def validate_course_id(ctx, param, value: str):
     '-o',
     '--output-dir',
     metavar='DIR',
-    default='ilmsdump.d',
+    default='ilmsdump.out',
     show_default=True,
     help='Output directory to store login credentials and downloads',
 )
