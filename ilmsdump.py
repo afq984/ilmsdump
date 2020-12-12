@@ -732,10 +732,18 @@ class SinglePageDownloadable(Downloadable):
 
 
 class Score(SinglePageDownloadable):
+    """
+    成績計算
+    """
+
     extra_params = {'f': 'score'}
 
 
 class GroupList(SinglePageDownloadable):
+    """
+    小組專區
+    """
+
     extra_params = {'f': 'grouplist'}
 
 
