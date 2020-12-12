@@ -40,6 +40,14 @@ COURSE_359 = ilmsdump.Course(
     is_admin=False,
 )
 
+# Special homework
+COURSE_38353 = ilmsdump.Course(
+    id=38353,
+    serial='10720FL300606',
+    is_admin=False,
+    name='中級日語二Intermediate Japanese II',
+)
+
 ANNOUNCEMENT_2218728 = ilmsdump.Announcement(
     id=2218728,
     title='HW3 成績公佈',
@@ -154,6 +162,21 @@ HOMEWORK_200355 = ilmsdump.Homework(
     id=200355,
     title='Final Project',
     course=COURSE_40596,
+)
+
+# open submission
+HOMEWORK_182409 = ilmsdump.Homework(
+    id=182409,
+    title='第一次作業 日語動詞 た形 (指定歌曲)',
+    course=COURSE_38353,
+)
+
+
+# multiple div[@id="main"]
+HOMEWORK_183084 = ilmsdump.Homework(
+    id=183084,
+    title='第2次作業  L21課\u3000「~と思う／～と言う」相關句型的日語歌曲或新聞',
+    course=COURSE_38353,
 )
 
 GROUPLIST_40596 = ilmsdump.GroupList(

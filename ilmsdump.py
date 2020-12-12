@@ -426,14 +426,14 @@ class Downloader:
 
 
 def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
-    try:
-        (main,) = html.xpath('//div[@id="main"]')
-    except ValueError:
+    mains = html.xpath('//div[@id="main"]')
+    if not mains:
         raise Unavailable(
             '//div[@id="main"] not found: {}'.format(
-                ''.join(map(str.strip, html.xpath('//text()')))
+                ''.join(map(str.strip, html.xpath('//text()')))[:100]
             )
         )
+    main = mains[0]
     for to_remove in itertools.chain(
         main.xpath('div[@class="infoPath"]'),
         main.xpath('.//script'),
