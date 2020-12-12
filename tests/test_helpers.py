@@ -69,5 +69,5 @@ async def test_empty_async_generator():
 async def test_capture_keyboard_interrupt():
     with ilmsdump.capture_keyboard_interrupt() as interrupted:
         assert not interrupted.is_set()
-        os.kill(0, signal.SIGINT)
+        os.kill(0, getattr(signal, 'CTRL_C_EVENT', signal.SIGINT))
         assert interrupted.is_set()
