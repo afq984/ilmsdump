@@ -65,6 +65,7 @@ async def test_empty_async_generator():
     assert called == 1
 
 
+@pytest.mark.skip()
 @pytest.mark.asyncio
 async def test_capture_keyboard_interrupt():
     with ilmsdump.capture_keyboard_interrupt() as interrupted:
