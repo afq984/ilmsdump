@@ -849,6 +849,11 @@ def validate_course_id(ctx, param, value: str):
     help='Login to iLMS interactively before accessing iLMS',
 )
 @click.option(
+    '--anonymous',
+    is_flag=True,
+    help='Ignore stored credentials',
+)
+@click.option(
     '-o',
     '--output-dir',
     metavar='DIR',
@@ -862,15 +867,16 @@ def validate_course_id(ctx, param, value: str):
     callback=validate_course_id,
 )
 @as_sync
-async def main(course_ids, logout: bool, login: bool, output_dir: str):
+async def main(course_ids, logout: bool, login: bool, anonymous: bool, output_dir: str):
     async with Client(data_dir=output_dir) as client:
         d = Downloader(client=client)
         changed = False
         if logout:
             changed |= client.clear_credentials()
 
-        await client.ensure_authenticated(prompt=login)
-        changed |= login
+        if not anonymous:
+            await client.ensure_authenticated(prompt=login)
+            changed |= login
 
         if course_ids:
             courses = [course async for course in foreach_course(client, course_ids)]
