@@ -24,7 +24,7 @@ async def test_get_course_anonymous_doesnt_exist(client):
 @pytest.mark.asyncio
 async def test_get_courses_anonymous(client):
     with pytest.raises(ilmsdump.UserError):
-        async for course in client.get_courses():
+        async for course in client.get_enrolled_courses():
             pass
 
 

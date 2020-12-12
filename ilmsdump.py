@@ -259,7 +259,7 @@ class Client:
 
             return course
 
-    async def get_courses(self) -> AsyncGenerator['Course', None]:
+    async def get_enrolled_courses(self) -> AsyncGenerator['Course', None]:
         async with self.session.get(COURSE_LIST_URL) as response:
             body = await response.read()
             if b'\xe6\xac\x8a\xe9\x99\x90\xe4\xb8\x8d\xe8\xb6\xb3!' in body:
@@ -890,7 +890,7 @@ async def foreach_course(
 ) -> AsyncGenerator[Course, None]:
     for course_id in course_ids:
         if course_id == 'enrolled':
-            async for course in client.get_courses():
+            async for course in client.get_enrolled_courses():
                 yield course
         else:
             yield await client.get_course(int(course_id))
