@@ -132,6 +132,24 @@ HOMEWORK_198377 = ilmsdump.Homework(
     course=COURSE_40596,
 )
 
+HOMEWORK_201015 = ilmsdump.Homework(
+    id=201015,
+    title='HW3: All-Pairs Shortest Path (CPU)',
+    course=COURSE_40596,
+)
+
+ATTACHMENT_2038513 = ilmsdump.Attachment(
+    id=2038513,
+    title='PP2019_HW3.pdf',
+    parent=HOMEWORK_201015,
+)
+
+ATTACHMENT_2047732 = ilmsdump.Attachment(
+    id=2047732,
+    title='PP2019_HW3_v2.pdf',
+    parent=HOMEWORK_201015,
+)
+
 HOMEWORK_200355 = ilmsdump.Homework(
     id=200355,
     title='Final Project',

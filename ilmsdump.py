@@ -629,6 +629,26 @@ class Homework(Downloadable):
     title: str
     course: Course
 
+    async def download(self, client: Client):
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': self.course.id,
+                'f': 'hw',
+                'hw': self.id,
+            },
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
+        main = html_get_main(html)
+        for to_remove in main.xpath('.//div[@class="toolWrapper"]'):
+            to_remove.getparent().remove(to_remove)
+
+        for attachment in get_attachments(self, main):
+            yield attachment
+
+        with (client.get_dir_for(self) / 'index.html').open('wb') as file:
+            file.write(lxml.html.tostring(main))
+
 
 @dataclasses.dataclass
 class Attachment(Downloadable):
