@@ -60,6 +60,11 @@ async def test_get_homework_empty(client):
 
 
 @pytest.mark.asyncio
+async def test_get_score_empty(client):
+    assert [s async for s in data.COURSE_74.get_scores(client)] == []
+
+
+@pytest.mark.asyncio
 async def test_download(client: ilmsdump.Client):
     items = [i async for i in data.COURSE_40596.download(client)]
 

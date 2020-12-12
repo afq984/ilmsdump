@@ -412,6 +412,7 @@ class Course(Downloadable):
             self.get_materials(client),
             self.get_discussions(client),
             self.get_homeworks(client),
+            self.get_scores(client),
         ]
         for generator in generators:
             async for item in generator:
@@ -502,6 +503,20 @@ class Course(Downloadable):
                     title=a.text,
                     course=self,
                 )
+
+    async def get_scores(self, client) -> AsyncGenerator['Score', None]:
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/course.php?courseID',
+            params={
+                'f': 'score',
+                'courseID': self.id,
+            },
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
+            if not html.xpath(
+                '//div[@id="main"]//input[@type="button" and @onclick="history.back()"]'
+            ):
+                yield Score(course=self)
 
 
 @dataclasses.dataclass
@@ -648,6 +663,31 @@ class Homework(Downloadable):
 
         with (client.get_dir_for(self) / 'index.html').open('wb') as file:
             file.write(lxml.html.tostring(main))
+
+
+@dataclasses.dataclass
+class Score(Downloadable):
+    course: Course
+
+    @property
+    def id(self):
+        return self.course.id
+
+    async def download(self, client: Client):
+        async with client.session.get(
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': self.course.id,
+                'f': 'score',
+            },
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
+            main = html_get_main(html)
+
+            with (client.get_dir_for(self) / 'index.html').open('wb') as file:
+                file.write(lxml.html.tostring(main))
+        return
+        yield
 
 
 @dataclasses.dataclass
