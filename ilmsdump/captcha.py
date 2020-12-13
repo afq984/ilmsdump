@@ -2,9 +2,12 @@ import asyncio
 import base64
 import io
 import random
+import logging
 
 import aiohttp
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 WIDTH = 26
 HEIGHT = 16
@@ -40,8 +43,8 @@ def hamming_weight(value: int) -> int:
 
 def match(im):
     p = process(im)
-    print('Processing image:')
-    print(to_data_uri(im))
+    logger.info('Processing image:')
+    logger.info(to_data_uri(im))
     matches, digit = max(
         (
             SIZE - hamming_weight(p ^ matcher),
@@ -50,21 +53,25 @@ def match(im):
         for (digit, matcher) in MATCHERS
     )
     score = matches / SIZE
-    print(f'Matched as {digit}, score={score:.4f}')
+    logger.info(f'Matched as {digit}, score={score:.4f}')
     return digit
+
+
+def request(session: aiohttp.ClientSession) -> aiohttp.ClientResponse:
+    return session.get(
+        'http://lms.nthu.edu.tw/sys/lib/class/csecimg.php',
+        params={
+            'width': 16,
+            'height': 26,
+            'characters': 1,
+            'rk': str(random.random()),
+        },
+    )
 
 
 async def test():
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-            'http://lms.nthu.edu.tw/sys/lib/class/csecimg.php',
-            params={
-                'width': 16,
-                'height': 26,
-                'characters': 1,
-                'rk': str(random.random()),
-            },
-        ) as response:
+        async with request(session) as response:
             b = await response.read()
     im = Image.open(io.BytesIO(b))
     match(im)
