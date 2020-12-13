@@ -10,13 +10,11 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
     - name: Install
-      run: |
-        python -m pip install -U .[dev]
+      run: python -m pip install -U .[dev]
 
     - name: Test
       continue-on-error: true
-      run: |
-        python -m pytest --cov=ilmsdump --cov-report=xml tests
+      run: python -m pytest --cov=ilmsdump --cov-report=xml tests
 
     - uses: codecov/codecov-action@v1
       with:

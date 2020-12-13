@@ -29,7 +29,7 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
     keywords='NTHU, iLMS',
-    py_modules=['ilmsdump'],
+    packages=['ilmsdump'],
     python_requires='>=3.7, <4',
     install_requires=[
         'aiohttp[speedups]',

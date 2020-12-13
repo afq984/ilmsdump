@@ -106,7 +106,7 @@ pytest tests
 ### Linting
 
 ```
-flake8 ilmsdump.py setup.py tests
+flake8 ilmsdump setup.py tests
 ```
 
 ### Format Code
