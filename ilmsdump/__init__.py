@@ -211,10 +211,9 @@ class Client:
             response_url=yarl.URL(DOMAIN),
         )
         name = await self.get_login_state()
-        if name is not None:
-            self.log('Logged in as', name)
-            return
-        raise LoginFailed('cannot login with provided PHPSESSID')
+        if name is None:
+            raise LoginFailed('cannot login with provided PHPSESSID')
+        self.log('Logged in as', name)
 
     async def get_login_state(self):
         async with self.session.get(LOGIN_STATE_URL) as response:
