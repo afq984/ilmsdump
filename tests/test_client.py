@@ -49,6 +49,12 @@ async def test_get_login_state_anonymous(client):
 
 
 @pytest.mark.asyncio
+async def test_login_with_phpsessid_invalid(client: ilmsdump.Client):
+    with pytest.raises(ilmsdump.LoginFailed):
+        await client.login_with_phpsessid('badsessid')
+
+
+@pytest.mark.asyncio
 async def test_get_dir_for(client):
     course = data.COURSE_74
     dir_ = client.get_dir_for(course)
