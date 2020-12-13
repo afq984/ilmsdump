@@ -37,6 +37,7 @@ setup(
         'lxml',
         'click',
         'wcwidth',
+        'pillow',
     ],
     extras_require={
         'dev': [

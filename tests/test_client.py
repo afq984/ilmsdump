@@ -49,6 +49,25 @@ async def test_get_login_state_anonymous(client):
 
 
 @pytest.mark.asyncio
+async def test_login_with_username_and_password_invalid(client: ilmsdump.Client):
+    with pytest.raises(ilmsdump.LoginFailed) as exc:
+        await client.login_with_username_and_password('username', 'badpassword')
+
+    exc_message = exc.value.args[0]
+    print(exc_message)
+    # make sure our captcha is correct
+    assert exc_message['focus'] != 'loginSecCode'
+    assert exc_message['msg'] != '您輸入的安全校驗碼不正確'
+    assert exc_message['msg'] != 'You entered an incorrect number'
+
+
+@pytest.mark.asyncio
+async def test_login_with_phpsessid_invalid(client: ilmsdump.Client):
+    with pytest.raises(ilmsdump.LoginFailed):
+        await client.login_with_phpsessid('badsessid')
+
+
+@pytest.mark.asyncio
 async def test_get_dir_for(client):
     course = data.COURSE_74
     dir_ = client.get_dir_for(course)
