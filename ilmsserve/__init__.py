@@ -441,6 +441,10 @@ def make_app(data_dir: str):
     help='Data directory.',
     default='ilmsdump.out',
 )
-def main(data_dir: str):
+@click.option(
+    '--port',
+    type=int,
+)
+def main(data_dir: str, port: Optional[int]):
     app = make_app(data_dir=data_dir)
-    web.run_app(app)
+    web.run_app(app, port=port)
