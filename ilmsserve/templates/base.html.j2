@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <title>{{ title }} - ilmsserve</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.1/css/bulma.min.css"
+        integrity="sha256-WLKGWSIJYerRN8tbNGtXWVYnUM5wMJTXD8eG4NtGcDM=" crossorigin="anonymous">
+    <script defer src="https://use.fontawesome.com/releases/v5.14.0/js/all.js"></script>
+    <style>
+        li>a[disabled] {
+            pointer-events: none;
+            opacity: .6;
+        }
+
+        .material-icons {
+            font-size: 1em;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="section">
+        <div class="container">
+
+            <nav class="breadcrumb" aria-label="breadcrumbs">
+                <ul>
+                    {% for part in path %}
+                    {% if not loop.last %}
+                    <li><a href="{{ part.url }}">{{ part.text }}</a></li>
+                    {% else %}
+                    <li class="is-active"><a href="#" aria-current="page">{{ part.text }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                    {% block pathextra %}{% endblock %}
+                </ul>
+            </nav>
+
+            <div class="columns">
+                {% block menuextra %}
+                {% endblock %}
+                <main class="column">{% block main %}{% endblock %}
+                </main>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="content has-text-centered">
+            <a href="http://lms.nthu.edu.tw/">NTHU iLMS</a> data backed up by <a
+                href="https://github.com/afq984/ilmsdump">ilmsdump</a>
+        </div>
+    </footer>
+</body>
+
+</html>

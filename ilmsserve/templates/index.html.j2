@@ -1,0 +1,8 @@
+{% set title = "課程列表" %}
+{% extends "base.html.j2" %}
+
+{% from "table.html.j2" import table %}
+
+{% block main %}
+{{ table(courses) }}
+{% endblock %}
