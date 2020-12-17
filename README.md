@@ -4,7 +4,7 @@
 
 ## Installation
 
-Requirements: Python 3.7 or later
+Requirements: Python 3.8 or later
 
 ```
 python -m pip install -U https://github.com/afq984/ilmsdump/archive/main.zip
