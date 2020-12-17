@@ -50,6 +50,7 @@ setup(
     entry_points={
         'console_scripts': [
             'ilmsdump=ilmsdump:main',
+            'ilmsserve=ilmsserve:main',
         ],
     },
 )
