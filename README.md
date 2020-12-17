@@ -1,5 +1,7 @@
 # NTHU iLMS backup tool
 
+[Online demo](https://ilmsdump.afq984.org)
+
 ![Test](https://github.com/afq984/ilmsdump/workflows/Test/badge.svg) ![Lint](https://github.com/afq984/ilmsdump/workflows/Lint/badge.svg) [![codecov](https://codecov.io/gh/afq984/ilmsdump/branch/main/graph/badge.svg?token=56G2HHFE73)](https://codecov.io/gh/afq984/ilmsdump)
 
 ## Installation
@@ -46,6 +48,13 @@ ilmsdump enrolled
 ilmsdump --help
 ```
 
+### 查看匯出的課程
+
+```
+ilmsserve
+```
+
+預設網址為 http://localhost:8080，可用 --port 來改
 
 ## Features & Status
 
@@ -58,7 +67,7 @@ ilmsdump --help
 *   課程活動(公告) ✔️
     *   公告 ✔️
         *   附件 ✔️
-    *   活動 ❓
+    *   活動 ❌
 *   上課教材 ✔️
     *   附件 ✔️
     *   Evercam/Powercam 影片 ✔️
