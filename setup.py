@@ -37,7 +37,7 @@ setup(
         'click',
         'wcwidth',
         'pillow',
-        'aiohttp-jinja2'
+        'aiohttp-jinja2',
     ],
     extras_require={
         'dev': [
