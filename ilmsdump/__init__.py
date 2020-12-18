@@ -1225,7 +1225,7 @@ async def main(
             with open(resume, 'rb') as file:
                 resmue_data = pickle.load(file)
                 targets.extend(resmue_data['items'])
-                ignores.extend(resmue_data['ignore'])
+                ignores.update(resmue_data['ignore'])
         if course_ids:
             courses = [course async for course in foreach_course(client, course_ids)]
             if courses:
@@ -1235,7 +1235,7 @@ async def main(
         if targets:
             changed = True
             if not dry:
-                await d.run(courses, ignore=set(ignore))
+                await d.run(targets, ignore=set(ignore))
         if not changed:
             click.echo('Nothing to do', err=True)
 
