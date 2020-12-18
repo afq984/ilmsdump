@@ -54,7 +54,7 @@ ilmsdump --help
 ilmsserve
 ```
 
-預設網址為 http://localhost:8080，可用 --port 來改
+預設網址為 http://localhost:8080 ，可用 --port 來改
 
 ## Features & Status
 
