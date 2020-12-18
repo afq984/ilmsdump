@@ -1,0 +1,26 @@
+{% macro table(items, link_fields=["id", "title", "name"], exclude_fields=["course", "children"]) %}
+<table class="table">
+<tr>
+{% for key in items[0].meta %}
+{% if key not in exclude_fields %}
+<th>
+{{ key }}
+</th>
+{% endif %}
+{% endfor %}
+</tr>
+{% for item in sort_by_id(items) %}
+<tr>
+{% for key, value in item.meta.items() %}
+{% if key not in exclude_fields %}
+{% if key in link_fields %}
+<td><a href="{{ item.get_url() }}">{{ value }}</a></td>
+{% else %}
+<td>{{ value }}</td>
+{% endif %}
+{% endif %}
+{% endfor %}
+</tr>
+{% endfor %}
+</table>
+{% endmacro %}

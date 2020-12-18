@@ -1,0 +1,31 @@
+{% set title = course.meta.name %}
+{% extends "base.html.j2" %}
+
+
+{% block menuextra %}
+
+<div class="column is-one-fifth">
+    <aside class="menu">
+<p class="menu-label">
+    {{ course.meta.serial }}
+</p>
+<ul class="menu-list">
+    {% for menu in COURSE_MENU_ITEMS %}
+    <li><a href="{{ menu.href(course) }}"{% if menu.is_active(course, request) %} class="is-active"
+            {% endif %}{% if menu.typename is not none and menu.typename not in course.children %} disabled{% endif %}>
+            {{ menu.text(course.children) }}
+        </a></li>
+    {% endfor %}
+</ul>
+</aside>
+</div>
+{% endblock %}
+
+{% block main %}
+{% if "video" in item.children %}
+<video src="/video/{{ item.children['video'][0].meta.id }}" controls></video>
+{% endif %}
+<div class="content">
+    {{ item.embed("index.html") }}
+</div>
+{% endblock %}

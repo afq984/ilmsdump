@@ -57,6 +57,15 @@ def as_sync(func):
     return wrapper
 
 
+def as_sync_cooperative(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(func(*args, **kwargs))
+
+    return wrapper
+
+
 class _EmptyAsyncGenerator:
     def __init__(self, coro: Awaitable):
         self._done = False
@@ -94,8 +103,7 @@ def capture_keyboard_interrupt() -> Iterable[asyncio.Event]:
         signal.signal(signal.SIGINT, old_handler)
 
 
-@functools.lru_cache()
-@as_sync
+@as_sync_cooperative
 async def _get_workaround_client_response_content_is_traced():
     is_traced = False
 

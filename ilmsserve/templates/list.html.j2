@@ -1,0 +1,7 @@
+{% extends "course.html.j2" %}
+
+{% from "table.html.j2" import table %}
+
+{% block main %}
+{{ table(item.children[list_class]) }}
+{% endblock %}

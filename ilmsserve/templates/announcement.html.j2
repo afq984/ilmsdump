@@ -1,0 +1,15 @@
+{% extends "course.html.j2" %}
+
+{% block main %}
+{% set news = item.json.news %}
+<h1 class="title">{{ item.meta.title }}</h1>
+<div class="content">
+    <strong>{{ news.poster }}</strong> <small>{{ fa.eye }}{{ news.views }}</small>
+    <br>
+    {{ news.note | safe }}
+{% for attachment in item.children.get('attachment', ()) %}
+{% if loop.index0 == 0 %}<br>{% endif %}
+{{ fa.paperclip }} <a href="/attachment/{{ attachment.meta.id }}">{{ attachment.meta.title }}</a>
+{% endfor %}
+</div>
+{% endblock %}

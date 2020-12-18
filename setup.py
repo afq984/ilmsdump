@@ -23,14 +23,13 @@ setup(
         'Intended Audience :: End Users/Desktop',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3 :: Only',
     ],
     keywords='NTHU, iLMS',
     packages=['ilmsdump'],
-    python_requires='>=3.7, <4',
+    python_requires='>=3.8, <4',
     install_requires=[
         'aiohttp[speedups]',
         'yarl',
@@ -38,6 +37,7 @@ setup(
         'click',
         'wcwidth',
         'pillow',
+        'aiohttp-jinja2',
     ],
     extras_require={
         'dev': [
@@ -49,6 +49,7 @@ setup(
     entry_points={
         'console_scripts': [
             'ilmsdump=ilmsdump:main',
+            'ilmsserve=ilmsserve:main',
         ],
     },
 )

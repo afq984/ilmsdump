@@ -1,0 +1,19 @@
+{% extends "course.html.j2" %}
+
+{% block main %}
+{% for post in fix_img_src(item.json)['posts']['items'] %}
+<div class="box">
+<div class="content">
+    <strong>{{ post.name }}</strong>
+    <small>{{ fa.envelope }}{{ post.email }}</small>
+    <small>{{ fa.calendar }}{{ post.date }}</small>
+    <br>
+    {{ post.note | safe }}
+{% for attachment in post.attach %}
+{% if loop.index0 == 0 %}<br>{% endif %}
+{{ fa.paperclip }} <a href="/attachment/{{ attachment.id }}">{{ attachment.srcName }}</a>
+{% endfor %}
+</div>
+</div>
+{% endfor %}
+{% endblock %}
