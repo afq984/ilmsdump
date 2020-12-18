@@ -9,6 +9,13 @@ COURSE_74 = ilmsdump.Course(
     is_admin=False,
 )
 
+COURSE_399 = ilmsdump.Course(
+    id=399,
+    serial='09810CS140107',
+    is_admin=False,
+    name='資訊系統應用Computer Systems & Applications',
+)
+
 COURSE_46274 = ilmsdump.Course(
     id=46274,
     serial='10910CS542200',

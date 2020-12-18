@@ -1,10 +1,12 @@
 import os
+import pickle
 import tempfile
 
 import click.testing
 import pytest
 
 import ilmsdump
+from tests import data
 
 
 @pytest.fixture(scope='function')
@@ -50,6 +52,23 @@ def test_download(tempdir):
 
     # http://lms.nthu.edu.tw/course/399
     # open course having no attachments
+
+    for sub in [
+        'course/399/index.html',
+        'course/399/meta.json',
+        'announcement/2714/index.json',
+        'announcement/2714/meta.json',
+    ]:
+        assert os.path.exists(os.path.join(tempdir, sub))
+
+
+def test_resume(tempdir):
+    resume_file = os.path.join(tempdir, 'resmue.pickle')
+    with open(resume_file, 'wb') as file:
+        pickle.dump({'items': [data.COURSE_399], 'ignore': []}, file)
+
+    runner = click.testing.CliRunner(mix_stderr=False)
+    runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '--resume', resume_file])
 
     for sub in [
         'course/399/index.html',
