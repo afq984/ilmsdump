@@ -3,8 +3,9 @@
 {% block main %}
 {% set news = item.json.news %}
 <h1 class="title">{{ item.meta.title }}</h1>
+<strong>{{ news.poster }}</strong> <small>{{ fa.eye }}{{ news.views }}</small> <small>{{ fa.calendar }}{{ news.createTime }}</small>
+
 <div class="content">
-    <strong>{{ news.poster }}</strong> <small>{{ fa.eye }}{{ news.views }}</small>
     <br>
     {{ news.note | safe }}
 {% for attachment in item.children.get('attachment', ()) %}
