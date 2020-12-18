@@ -469,7 +469,7 @@ class Downloader:
             bandwidth = (self.client.bytes_downloaded - old_size) / (now - then)
             item_ps = (items - old_items) / (now - then)
         self.rates.append((now, self.client.bytes_downloaded, items))
-        self.rates_str = f'{bandwidth*8e-6:.2f}Mbps {item_ps:.0f}/s'
+        self.rates_str = f'{bandwidth*8e-6:.2f}Mbps  {item_ps:.1f}/s'
 
     async def periodically_report_progress(self, done: asyncio.Event, period: float = 0.5):
         while not done.is_set():
