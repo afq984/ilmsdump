@@ -29,6 +29,9 @@ setup(
     ],
     keywords='NTHU, iLMS',
     packages=['ilmsdump', 'ilmsserve'],
+    package_data={
+        'ilmsserve': ['templates/*.j2'],
+    },
     python_requires='>=3.8, <4',
     install_requires=[
         'aiohttp[speedups]',
