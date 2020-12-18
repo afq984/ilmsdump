@@ -527,7 +527,6 @@ class Downloader:
                             file,
                         )
                 except Exception:
-                    items.appendleft(item)
                     resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
                     raise Exception(
                         f'Error occurred while handling {item}\n'
