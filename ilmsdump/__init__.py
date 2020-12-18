@@ -453,7 +453,11 @@ class Downloader:
     def report_progress(self):
         progress_str = '  '.join(f'{k}:{v.completed}/{v.total}' for (k, v) in self.stats.items())
         dl_size_str = f'{self.client.bytes_downloaded / 1e6:.1f}MB'
-        print(f'{self.rates_str}  DL:{dl_size_str} ', progress_str, end='\r', file=sys.stderr)
+        print(
+            f'{self.rates_str}  DL:{dl_size_str}  {progress_str}'.ljust(79),
+            end='\r',
+            file=sys.stderr,
+        )
 
     def update_rates(self):
         now = time.perf_counter()
