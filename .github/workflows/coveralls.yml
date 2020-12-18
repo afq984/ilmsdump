@@ -1,4 +1,4 @@
-name: codecov.io
+name: coverage
 
 on: ["push", "pull_request"]
 
@@ -16,6 +16,8 @@ jobs:
       continue-on-error: true
       run: python -m pytest --cov=ilmsdump --cov-report=xml tests
 
-    - uses: codecov/codecov-action@v1
-      with:
-        file: ./coverage.xml
+    - run: python -m pip install -U coveralls
+
+    - run: coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

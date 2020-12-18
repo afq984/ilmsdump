@@ -1,6 +1,6 @@
 # NTHU iLMS backup tool
 
-![Test](https://github.com/afq984/ilmsdump/workflows/Test/badge.svg) ![Lint](https://github.com/afq984/ilmsdump/workflows/Lint/badge.svg) [![codecov](https://codecov.io/gh/afq984/ilmsdump/branch/main/graph/badge.svg?token=56G2HHFE73)](https://codecov.io/gh/afq984/ilmsdump)
+![Test](https://github.com/afq984/ilmsdump/workflows/Test/badge.svg) ![Lint](https://github.com/afq984/ilmsdump/workflows/Lint/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/afq984/ilmsdump/badge.svg)](https://coveralls.io/github/afq984/ilmsdump)
 
 [Online demo](https://ilmsdump.afq984.org)
 
