@@ -3,6 +3,7 @@ import re
 import sys
 import pickle
 import types
+import time
 import json
 import pathlib
 import collections
@@ -415,6 +416,8 @@ class Downloader:
         self.client = client
         self.stats = collections.defaultdict(Stat)
         self.fullstats = collections.Counter()
+        self.rates = collections.deque(maxlen=20)
+        self.rates_str = '0.00Mbps 0/s'
 
     def mark_total(self, item):
         self.stats[item.STATS_NAME].total += 1
@@ -424,14 +427,27 @@ class Downloader:
         self.fullstats[item.__class__.__name__] += 1
 
     def report_progress(self):
-        progress_str = ' '.join(f'{k}:{v.completed}/{v.total}' for (k, v) in self.stats.items())
+        progress_str = '  '.join(f'{k}:{v.completed}/{v.total}' for (k, v) in self.stats.items())
         dl_size_str = f'{self.client.bytes_downloaded / 1e6:.1f}MB'
-        print(f'DL:{dl_size_str}', progress_str, end='\r', file=sys.stderr)
+        print(f'{self.rates_str}  DL:{dl_size_str} ', progress_str, end='\r', file=sys.stderr)
+
+    def update_rates(self):
+        now = time.perf_counter()
+        items = sum(self.fullstats.values())
+        bandwidth = 0
+        item_ps = 0
+        if self.rates:
+            then, old_size, old_items = self.rates[0]
+            bandwidth = (self.client.bytes_downloaded - old_size) / (now - then)
+            item_ps = (items - old_items) / (now - then)
+        self.rates.append((now, self.client.bytes_downloaded, items))
+        self.rates_str = f'{bandwidth*8e-6:.2f}Mbps {item_ps:.0f}/s'
 
     async def periodically_report_progress(self, done: asyncio.Event, period: float = 0.5):
         while not done.is_set():
             with contextlib.suppress(asyncio.TimeoutError):
                 await asyncio.wait_for(done.wait(), period)
+            self.update_rates()
             self.report_progress()
 
     def create_resume_file(self, data):
