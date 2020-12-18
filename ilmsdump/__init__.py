@@ -118,7 +118,7 @@ async def _get_workaround_client_response_content_is_traced():
 
     async with aiohttp.ClientSession(trace_configs=[tc]) as client:
         async with client.get('http://lms.nthu.edu.tw') as response:
-            async for chunk in response.content.iter_any():
+            async for chunk in response.content.iter_chunked(0x10000):
                 pass
     return is_traced
 
@@ -1058,7 +1058,7 @@ class Attachment(Downloadable):
             },
         ) as response:
             with (client.get_dir_for(self) / self.suggest_filename()).open('wb') as file:
-                async for chunk in response.content.iter_any():
+                async for chunk in response.content.iter_chunked(0x10000):
                     if not _workaround_client_response_content_is_traced:
                         client.bytes_downloaded += len(chunk)
                     file.write(chunk)
@@ -1081,7 +1081,7 @@ class Video(Downloadable):
     async def download(self, client):
         async with client.request('GET', self.url) as response:
             with (client.get_dir_for(self) / 'video.mp4').open('wb') as file:
-                async for chunk in response.content.iter_any():
+                async for chunk in response.content.iter_chunked(0x10000):
                     if not _workaround_client_response_content_is_traced:
                         client.bytes_downloaded += len(chunk)
                     file.write(chunk)

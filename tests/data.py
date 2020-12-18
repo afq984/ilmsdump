@@ -261,3 +261,10 @@ ATTACHMENT_133807 = ilmsdump.Attachment(
     title='HW3.pdf',
     parent=HOMEWORK_32460,
 )
+
+# https://github.com/afq984/ilmsdump/issues/12
+ATTACHMENT_3847 = ilmsdump.Attachment(
+    id=3847,
+    title='ch04.ppt',
+    parent=None,
+)
