@@ -370,6 +370,8 @@ def icon_redirect(request):
 
 def fix_img_src(data: json):
     for post in data['posts']['items']:
+        if not post['note'].strip():
+            continue
         element = lxml.html.fromstring(post['note'])
         fixes = {}
         for attachment in post['attach']:
