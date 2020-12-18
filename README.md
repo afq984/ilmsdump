@@ -1,8 +1,8 @@
 # NTHU iLMS backup tool
 
-[Online demo](https://ilmsdump.afq984.org)
-
 ![Test](https://github.com/afq984/ilmsdump/workflows/Test/badge.svg) ![Lint](https://github.com/afq984/ilmsdump/workflows/Lint/badge.svg) [![codecov](https://codecov.io/gh/afq984/ilmsdump/branch/main/graph/badge.svg?token=56G2HHFE73)](https://codecov.io/gh/afq984/ilmsdump)
+
+[Online demo](https://ilmsdump.afq984.org)
 
 ## Installation
 
