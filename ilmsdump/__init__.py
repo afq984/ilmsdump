@@ -1087,6 +1087,7 @@ def validate_course_id(ctx, param, value: str):
         Dump the courses given by their ID.
         The string "enrolled" can be used as a special ID to dump all courses
         enrolled by the logged in user.
+        The string "open" can be used as a special ID to dump all open courses.
         """,
 )
 @click.option(
