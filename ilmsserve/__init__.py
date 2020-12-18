@@ -385,6 +385,14 @@ def sort_by_id(items):
     return sorted(items, key=lambda x: x.meta['id'], reverse=True)
 
 
+def robots_txt(request):
+    return web.Response(
+        text='''User-agent: *
+Disallow: /
+'''
+    )
+
+
 def make_app(data_dir: str):
     app = web.Application()
     ctx = app[APP_CTX_KEY] = ApplicationContext(data_dir=data_dir)
@@ -428,6 +436,8 @@ def make_app(data_dir: str):
             # redirects
             web.get('/sys/read_attach.php', read_attach_php),
             web.get('/sys/res/icon/{filename}', icon_redirect),
+            # misc
+            web.get('/robots.txt', robots_txt),
         ]
     )
     return app
