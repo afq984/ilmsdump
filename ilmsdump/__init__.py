@@ -846,10 +846,12 @@ class Homework(Downloadable):
         ) as response:
             html = lxml.html.fromstring(await response.read())
 
-        if table_is_empty(html):
+        main = html_get_main(html)
+
+        if table_is_empty(main):
             return
 
-        (header_tr,) = html.xpath('//div[@class="tableBox"]//tr[@class="header"]')
+        (header_tr,) = main.xpath('.//div[@class="tableBox"]//tr[@class="header"]')
         field_indexes = {}
         for i, td in enumerate(header_tr):
             try:
@@ -863,7 +865,7 @@ class Homework(Downloadable):
         iname = field_indexes['name']
         assert iname > ititle
 
-        for tr in html.xpath('//div[@class="tableBox"]//tr[@class!="header"]'):
+        for tr in main.xpath('//div[@class="tableBox"]//tr[@class!="header"]'):
             a_s = tr[ititle].xpath('div/a')
             if not a_s:
                 continue
@@ -889,7 +891,7 @@ class Homework(Downloadable):
             )
 
         with (client.get_dir_for(self) / 'list.html').open('wb') as file:
-            file.write(lxml.html.tostring(html))
+            file.write(lxml.html.tostring(main))
 
 
 @dataclasses.dataclass
