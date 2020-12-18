@@ -77,6 +77,23 @@ def test_ignore(tempdir):
         assert not os.path.exists(os.path.join(tempdir, sub))
 
 
+def test_ignore_item(tempdir):
+    runner = click.testing.CliRunner(mix_stderr=False)
+    runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '399', '--ignore', 'Announcement-2714'])
+
+    for sub in [
+        'course/399/index.html',
+        'course/399/meta.json',
+    ]:
+        assert os.path.exists(os.path.join(tempdir, sub))
+
+    for sub in [
+        'announcement/2714/index.json',
+        'announcement/2714/meta.json',
+    ]:
+        assert not os.path.exists(os.path.join(tempdir, sub))
+
+
 def test_dry(tempdir):
     runner = click.testing.CliRunner(mix_stderr=False)
     runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '399', '--dry'])

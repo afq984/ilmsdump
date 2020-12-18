@@ -3,6 +3,7 @@ import re
 import sys
 import pickle
 import types
+import shlex
 import time
 import json
 import pathlib
@@ -145,6 +146,7 @@ class Client:
         self.session = aiohttp.ClientSession(
             raise_for_status=True,
             trace_configs=[trace_config],
+            timeout=aiohttp.ClientTimeout(total=80),
         )
 
         self.data_dir = pathlib.Path(data_dir).absolute()
@@ -401,6 +403,9 @@ class Client:
 
 
 class Downloadable:
+
+    _CLASSES = []
+
     @as_empty_async_generator
     async def download(self, client) -> AsyncGenerator['Downloadable', None]:
         pass
@@ -413,6 +418,11 @@ class Downloadable:
             field.name: flatten_attribute(getattr(self, field.name))
             for field in dataclasses.fields(self)
         }
+
+    @classmethod
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        Downloadable._CLASSES.append(cls.__name__)
 
 
 @functools.singledispatch
@@ -502,12 +512,16 @@ class Downloader:
                 if interrupted.is_set():
                     print(file=sys.stderr)
                     resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
-                    print(f'Interrupted. Run with --resume={resume_file} to resume download')
+                    print(
+                        'Interrupted.\n'
+                        f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
+                        f'Run with --ignore={item.as_id_string()} to ignore this item.'
+                    )
                     return
 
                 item = items[0]
 
-                if item.__class__.__name__ in ignore:
+                if item.__class__.__name__ in ignore or item.as_id_string() in ignore:
                     items.popleft()
                     continue
 
@@ -530,7 +544,8 @@ class Downloader:
                     resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
                     raise Exception(
                         f'Error occurred while handling {item}\n'
-                        f'Run with --resume={resume_file} to resume download'
+                        f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
+                        f'Run with --ignore={item.as_id_string()} to ignore this item.'
                     )
 
                 items.popleft()
@@ -1127,6 +1142,7 @@ def validate_course_id(ctx, param, value: str):
 @click.command(
     help="""
         Dump the courses given by their ID.
+
         The string "enrolled" can be used as a special ID to dump all courses
         enrolled by the logged in user.
         The string "open" can be used as a special ID to dump all open courses.
@@ -1161,7 +1177,12 @@ def validate_course_id(ctx, param, value: str):
 @click.option(
     '--ignore',
     multiple=True,
-    help='Ignore specified classes',
+    help=f'''Ignore items specied as `CLASS` or `CLASS-ID`.
+
+    Valid CLASSes are: {', '.join(Downloadable._CLASSES)}.
+
+    Example: --ignore=Course-74 ignores Course with ID 74.
+    --ignore=Video ignores all videos.''',
 )
 @click.option(
     '--dry',
@@ -1199,18 +1220,23 @@ async def main(
             await client.ensure_authenticated(prompt=login)
             changed |= login
 
+        targets = []
+        ignores = set(ignore)
         if resume is not None:
             with open(resume, 'rb') as file:
-                await d.run(**pickle.load(file))
-                changed = True
-        elif course_ids:
+                resmue_data = pickle.load(file)
+                targets.extend(resmue_data['items'])
+                ignores.extend(resmue_data['ignore'])
+        if course_ids:
             courses = [course async for course in foreach_course(client, course_ids)]
-
             if courses:
-                changed = True
                 print(end=''.join(generate_table(courses)))
-                if not dry:
-                    await d.run(courses, ignore=set(ignore))
+            targets.extend(courses)
+
+        if targets:
+            changed = True
+            if not dry:
+                await d.run(courses, ignore=set(ignore))
         if not changed:
             click.echo('Nothing to do', err=True)
 
