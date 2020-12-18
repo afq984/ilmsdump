@@ -6,7 +6,6 @@ import pytest
 import yarl
 
 import ilmsdump
-
 from tests import data
 
 

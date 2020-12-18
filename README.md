@@ -121,6 +121,7 @@ flake8 ilmsdump setup.py tests
 ### Format Code
 
 ```
+isort ilmsdump ilmsserve setup.py
 black .
 ```
 

@@ -3,7 +3,6 @@ import hashlib
 import pytest
 
 import ilmsdump
-
 from tests import data
 
 

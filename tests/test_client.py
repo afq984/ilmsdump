@@ -3,7 +3,6 @@ import os
 import pytest
 
 import ilmsdump
-
 from tests import data
 
 

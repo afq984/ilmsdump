@@ -1,7 +1,6 @@
 import pytest
 
 import ilmsdump
-
 from tests import data
 
 

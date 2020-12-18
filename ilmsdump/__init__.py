@@ -1,31 +1,30 @@
-import os
-import re
-import sys
-import pickle
-import types
-import shlex
-import time
-import json
-import pathlib
-import collections
-import hashlib
-import signal
-import shutil
-import functools
-import itertools
-import io
 import asyncio
-import getpass
-import dataclasses
+import collections
 import contextlib
-
-from typing import List, Union, AsyncGenerator, Iterable, Awaitable, Optional
+import dataclasses
+import functools
+import getpass
+import hashlib
+import io
+import itertools
+import json
+import os
+import pathlib
+import pickle
+import re
+import shlex
+import shutil
+import signal
+import sys
+import time
+import types
+from typing import AsyncGenerator, Awaitable, Iterable, List, Optional, Union
 
 import aiohttp
-import yarl
-import lxml.html
 import click
+import lxml.html
 import wcwidth
+import yarl
 from PIL import Image
 
 from ilmsdump import captcha

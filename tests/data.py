@@ -2,7 +2,6 @@ import yarl
 
 import ilmsdump
 
-
 COURSE_74 = ilmsdump.Course(
     id=74,
     serial='0001',

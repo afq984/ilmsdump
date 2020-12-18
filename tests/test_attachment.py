@@ -1,9 +1,7 @@
 import pytest
 
 import ilmsdump
-
 from tests import data
-
 
 ATTACHMENT_2616319_CONTENT = '''\
 HW3 成績已公佈
