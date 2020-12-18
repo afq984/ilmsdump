@@ -347,6 +347,57 @@ def read_attach_php(request: web.Request):
     raise web.HTTPTemporaryRedirect(yarl.URL('/attachment') / id)
 
 
+class CoursePHP(View):
+    def param(self, name):
+        try:
+            return self.request.query[name]
+        except KeyError:
+            raise web.HTTPBadRequest(text=f'missing required query parameter: {name}')
+
+    def redirect_url(self):
+        courseID = self.param('courseID')
+        f = self.request.query.get('f', 'syllabus')
+        if f == 'syllabus':
+            return f'/course/{courseID}'
+        if f == 'activity' or f == 'news':
+            return f'/course/{courseID}/announcement'
+        if f == 'doclist':
+            return f'/course/{courseID}/material'
+        if f == 'forumlist':
+            return f'/course/{courseID}/discussion'
+        if f == 'hwlist':
+            return f'/course/{courseID}/homework'
+        if f == 'score':
+            return f'/course/{courseID}/score'
+        if f in {
+            'group',
+            'grouplist',
+            'teamall',
+            'team_forumlist',
+            'team_memberlist',
+            'team_homework',
+        }:
+            return f'/course/{courseID}/grouplist'
+        if f == 'news_show':
+            return f'/announcement/{self.param("newsID")}'
+        if f == 'doc':
+            cid = self.param("cid")
+            if (self.ctx.data_dir / 'material' / cid / 'meta.json').exists():
+                return f'/material/{cid}'
+            if (self.ctx.data_dir / 'submittedhomework' / cid / 'meta.json').exists():
+                return f'/submittedhomework/{self.param("cid")}'
+        if f == 'forum':
+            return f'/discussion/{self.param("tid")}'
+        if f == 'hw':
+            return f'/homework/{self.param("hw")}'
+        if f == 'hw_doclist':
+            return f'/homework/{self.param("hw")}/submissions'
+        raise web.HTTPNotFound
+
+    async def get(self):
+        raise web.HTTPTemporaryRedirect(self.redirect_url())
+
+
 ICON_MAPPING = {
     'check.gif': 'done',
     'web.gif': 'home',
@@ -436,6 +487,7 @@ def make_app(data_dir: str):
             web.view('/video/{id}', VideoView),
             # redirects
             web.get('/sys/read_attach.php', read_attach_php),
+            web.view('/course.php', CoursePHP),
             web.get('/sys/res/icon/{filename}', icon_redirect),
             # misc
             web.get('/robots.txt', robots_txt),
