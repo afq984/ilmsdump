@@ -1,8 +1,8 @@
 import asyncio
 import base64
 import io
-import random
 import logging
+import random
 
 import aiohttp
 from PIL import Image

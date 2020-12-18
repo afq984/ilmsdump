@@ -1,17 +1,15 @@
 import dataclasses
+import functools
 import json
 import pathlib
-import functools
-
 from typing import Optional, Union
 
-import lxml.html
-import yarl
 import aiohttp_jinja2
 import click
 import jinja2
+import lxml.html
+import yarl
 from aiohttp import web
-
 
 here = pathlib.Path(__file__).parent.resolve()
 
