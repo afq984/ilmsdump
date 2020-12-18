@@ -357,7 +357,7 @@ ICON_MAPPING = {
     'mail.png': 'email',
     'wait.gif': 'hourglass_top',
     'zoom.jpg': 'zoom_in',
-    'lock.gif': 'lock.gif',
+    'lock.gif': 'lock',
     'cal_homework.gif': 'edit',
 }
 
