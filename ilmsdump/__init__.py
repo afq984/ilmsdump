@@ -162,6 +162,30 @@ class Client:
 
     log = staticmethod(print)
 
+    @contextlib.asynccontextmanager
+    async def request(self, *args, **kwargs):
+        retries = 3
+        sleep_duration = 5
+        while True:
+            try:
+                async with self.session.request(*args, **kwargs) as response:
+                    yield response
+                    return
+            except aiohttp.ClientResponseError as exc:
+                if not retries:
+                    raise
+                if exc.status != 400:
+                    raise
+                print(file=sys.stderr)
+                print(f'Exception occurred: {exc}', file=sys.stderr)
+                print(
+                    f'Sleeping for {sleep_duration}s; remaining retries: {retries}',
+                    file=sys.stderr,
+                )
+                await asyncio.sleep(sleep_duration)
+                sleep_duration *= 4
+                retries -= 1
+
     async def ensure_authenticated(self, prompt: bool):
         try:
             cred_file = open(self.cred_path)
@@ -587,7 +611,8 @@ class Course(Downloadable):
             async for item in generator:
                 yield item
 
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'courseID': self.id,
@@ -604,7 +629,8 @@ class Course(Downloadable):
 
     async def _item_paginator(self, client, f, page=1):
         for page in itertools.count(page):
-            async with client.session.get(
+            async with client.request(
+                'GET',
                 'http://lms.nthu.edu.tw/course.php',
                 params={
                     'courseID': self.id,
@@ -671,7 +697,8 @@ class Course(Downloadable):
                 )
 
     async def get_scores(self, client) -> AsyncGenerator['Score', None]:
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'f': 'score',
@@ -685,7 +712,8 @@ class Course(Downloadable):
                 yield Score(course=self)
 
     async def get_grouplists(self, client) -> AsyncGenerator['GroupList', None]:
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'f': 'grouplist',
@@ -708,7 +736,8 @@ class Announcement(Downloadable):
     STATS_NAME = 'Page'
 
     async def download(self, client: Client):
-        async with client.session.post(
+        async with client.request(
+            'POST',
             'http://lms.nthu.edu.tw/home/http_event_select.php',
             params={
                 'id': self.id,
@@ -741,7 +770,8 @@ class Material(Downloadable):
     STATS_NAME = 'Page'
 
     async def download(self, client: Client):
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'courseID': self.course.id,
@@ -764,7 +794,8 @@ class Material(Downloadable):
             file.write(lxml.html.tostring(main))
 
     async def get_video(self, client: Client, base_url: yarl.URL) -> Union[None, 'Video']:
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/sys/http_get_media.php',
             params={
                 'id': self.id,
@@ -798,7 +829,8 @@ class Discussion(Downloadable):
     STATS_NAME = 'Page'
 
     async def download(self, client: Client):
-        async with client.session.post(
+        async with client.request(
+            'POST',
             'http://lms.nthu.edu.tw/sys/lib/ajax/post.php',
             data={
                 'id': self.id,
@@ -832,7 +864,8 @@ class Homework(Downloadable):
 
     async def download(self, client: Client):
         # homework description
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'courseID': self.course.id,
@@ -852,7 +885,8 @@ class Homework(Downloadable):
             file.write(lxml.html.tostring(main))
 
         # submitted homework
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'courseID': self.course.id,
@@ -925,32 +959,16 @@ class SubmittedHomework(Downloadable):
     STATS_NAME = 'Page'
 
     async def download(self, client: Client):
-        retries = 3
-        sleep_duration = 5
-        while True:
-            try:
-                async with client.session.get(
-                    'http://lms.nthu.edu.tw/course.php',
-                    params={
-                        'courseID': self.course.id,
-                        'f': 'doc',
-                        'cid': self.id,
-                    },
-                ) as response:
-                    html = lxml.html.fromstring(await response.read())
-            except aiohttp.ClientResponseError as exc:
-                if not retries:
-                    raise
-                if exc.status != 400:
-                    raise
-                client.log()
-                client.log(f'Exception occurred: {exc}')
-                client.log(f'Sleeping for {sleep_duration} and retrying {retries}')
-                await asyncio.sleep(sleep_duration)
-                sleep_duration *= 2
-                retries -= 1
-            else:
-                break
+        async with client.request(
+            'GET',
+            'http://lms.nthu.edu.tw/course.php',
+            params={
+                'courseID': self.course.id,
+                'f': 'doc',
+                'cid': self.id,
+            },
+        ) as response:
+            html = lxml.html.fromstring(await response.read())
 
         main = html_get_main(html)
 
@@ -973,7 +991,8 @@ class SinglePageDownloadable(Downloadable):
 
     @as_empty_async_generator
     async def download(self, client: Client):
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/course.php',
             params={
                 'courseID': self.course.id,
@@ -1013,7 +1032,8 @@ class Attachment(Downloadable):
 
     @as_empty_async_generator
     async def download(self, client):
-        async with client.session.get(
+        async with client.request(
+            'GET',
             'http://lms.nthu.edu.tw/sys/read_attach.php',
             params={
                 'id': self.id,
@@ -1041,7 +1061,7 @@ class Video(Downloadable):
 
     @as_empty_async_generator
     async def download(self, client):
-        async with client.session.get(self.url) as response:
+        async with client.request('GET', self.url) as response:
             with (client.get_dir_for(self) / 'video.mp4').open('wb') as file:
                 async for chunk in response.content.iter_any():
                     if not _workaround_client_response_content_is_traced:
