@@ -35,6 +35,13 @@ def test_get_attachments():
         ilmsdump.Attachment(id=12345, title='attachment.txt', parent=data.COURSE_74),
     ]
 
+    # malformed link
+    html = lxml.html.fromstring(
+        '<a href="/sys/read_attach.php?id=109077" target="_blank" style="color: rgb(68, 68, 255); '
+        'text-decoration: none; "></a>'
+    )
+    assert list(ilmsdump.get_attachments(data.HOMEWORK_32460, html)) == []
+
 
 def test_generate_table():
     table = ''.join(

@@ -237,3 +237,21 @@ HOMEWORK_183084 = ilmsdump.Homework(
 GROUPLIST_40596 = ilmsdump.GroupList(
     course=COURSE_40596,
 )
+
+# empty <a> text
+HOMEWORK_32460 = ilmsdump.Homework(
+    id=32460,
+    title='HW3_ch8,ch9',
+    course=ilmsdump.Course(
+        id=7636,
+        serial='10010CS342301',
+        is_admin=False,
+        name='作業系統Operating Systems',
+    ),
+)
+
+ATTACHMENT_133807 = ilmsdump.Attachment(
+    id=133807,
+    title='HW3.pdf',
+    parent=HOMEWORK_32460,
+)

@@ -578,6 +578,8 @@ def table_is_empty(html: lxml.html.HtmlElement) -> bool:
 def get_attachments(parent: Downloadable, element: lxml.html.HtmlElement) -> Iterable['Attachment']:
     ids = set()
     for a in element.xpath('.//a[starts-with(@href, "/sys/read_attach.php")]'):
+        if a.text is None or not a.text.strip():
+            continue
         url = yarl.URL(a.attrib['href'])
         id_ = int(url.query['id'])
         if id_ in ids:

@@ -57,3 +57,8 @@ async def test_download_open_submission(client: ilmsdump.Client):
 @pytest.mark.asyncio
 async def test_download_open_group_submission(client: ilmsdump.Client):
     assert [c async for c in data.HOMEWORK_18264.download(client)] == [data.SUBMITTED_59376]
+
+
+@pytest.mark.asyncio
+async def test_donload_a_without_content(client: ilmsdump.Client):
+    assert [c async for c in data.HOMEWORK_32460.download(client)] == [data.ATTACHMENT_133807]
