@@ -293,7 +293,6 @@ class SubmissionRedirectView(View):
         item = self.ctx.get('submittedhomework', self.request.match_info['id'])
         for homework in item.course.children['homework']:
             if f'SubmittedHomework-{self.id}' in homework.meta['children']:
-                print(homework)
                 raise web.HTTPTemporaryRedirect(
                     f'/homework/{homework.meta["id"]}/submissions/{self.id}'
                 )
