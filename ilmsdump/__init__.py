@@ -9,6 +9,7 @@ import pathlib
 import collections
 import hashlib
 import signal
+import shutil
 import functools
 import itertools
 import io
@@ -441,7 +442,7 @@ class Downloader:
         self.stats = collections.defaultdict(Stat)
         self.fullstats = collections.Counter()
         self.rates = collections.deque(maxlen=20)
-        self.rates_str = '0.00Mbps 0/s'
+        self.rates_str = '  0.00Mbps'
 
     def mark_total(self, item):
         self.stats[item.STATS_NAME].total += 1
@@ -454,22 +455,21 @@ class Downloader:
         progress_str = '  '.join(f'{k}:{v.completed}/{v.total}' for (k, v) in self.stats.items())
         dl_size_str = f'{self.client.bytes_downloaded / 1e6:.1f}MB'
         print(
-            f'{self.rates_str}  DL:{dl_size_str}  {progress_str}'.ljust(79),
+            f'{self.rates_str}  DL:{dl_size_str}  {progress_str}'.ljust(
+                shutil.get_terminal_size().columns
+            ),
             end='\r',
             file=sys.stderr,
         )
 
     def update_rates(self):
         now = time.perf_counter()
-        items = sum(self.fullstats.values())
         bandwidth = 0
-        item_ps = 0
         if self.rates:
-            then, old_size, old_items = self.rates[0]
+            then, old_size = self.rates[0]
             bandwidth = (self.client.bytes_downloaded - old_size) / (now - then)
-            item_ps = (items - old_items) / (now - then)
-        self.rates.append((now, self.client.bytes_downloaded, items))
-        self.rates_str = f'{bandwidth*8e-6:.2f}Mbps  {item_ps:.1f}/s'
+        self.rates.append((now, self.client.bytes_downloaded))
+        self.rates_str = f'{bandwidth*8e-6:6.2f}Mbps'
 
     async def periodically_report_progress(self, done: asyncio.Event, period: float = 0.5):
         while not done.is_set():
@@ -537,7 +537,6 @@ class Downloader:
                 items.popleft()
                 items.extend(item_children)
                 self.mark_completed(item)
-                self.report_progress()
 
         done.set()
         await report_progress_task
