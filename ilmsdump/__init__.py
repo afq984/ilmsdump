@@ -1144,7 +1144,10 @@ def validate_course_id(ctx, param, value: str):
 
         The string "enrolled" can be used as a special ID to dump all courses
         enrolled by the logged in user.
+
         The string "open" can be used as a special ID to dump all open courses.
+        Downloading all open courses generates a lot of load & traffic on the server.
+        Proceed with caution.
         """,
 )
 @click.option(
