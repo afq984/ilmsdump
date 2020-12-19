@@ -1,0 +1,15 @@
+name: Container
+
+on: ["push"]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v2
+    - run: docker build . --tag ghcr.io/afq984/ilmsserve:$(git branch --show-current)
+    - run: echo $CR_PAT | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      env:
+        CR_PAT: ${{ secrets.CR_PAT }}
+    - run: docker push ghcr.io/afq984/ilmsserve:$(git branch --show-current)
