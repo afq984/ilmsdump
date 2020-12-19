@@ -59,7 +59,7 @@ ilmsserve
 Or:
 
 ```
-podman run --mount type=bind,source=$PWD/ilmsdump.out,target=/data -p 8080:8080 ghcr.io/afq984/ilmsserve:main
+podman run --rm --mount type=bind,source=$PWD/ilmsdump.out,target=/data,ro=true -p 8080:8080 ghcr.io/afq984/ilmsserve:main
 ```
 
 ## Features & Status

@@ -16,4 +16,6 @@ RUN pip install --no-cache /build
 ENV ADDR :8080
 WORKDIR /
 
+USER nobody:nobody
+
 CMD exec gunicorn 'ilmsserve:make_app("/data")' --worker-class aiohttp.GunicornWebWorker --access-logfile - --bind $ADDR
