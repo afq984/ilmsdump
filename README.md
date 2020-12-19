@@ -56,6 +56,12 @@ ilmsserve
 
 預設網址為 http://localhost:8080 ，可用 --port 來改
 
+Or:
+
+```
+podman run --mount type=bind,source=$PWD/ilmsdump.out,target=/data -p 8080:8080 ghcr.io/afq984/ilmsserve:main
+```
+
 ## Features & Status
 
 > ✔️ supported; 🚧 work in progress; ❓ maybe; ❌ lack of interest or too complicated
