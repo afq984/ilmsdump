@@ -30,7 +30,7 @@ ilmsdump --logout --login
 
 ### 匯出課程
 
-使用網址中的課程 Course ID 匯出 [0001](http://lms.nthu.edu.tw/course/74) 以及 [10910CS542200](http://lms.nthu.edu.tw/course/46274):
+使用網址中的 Course ID 匯出 [0001](http://lms.nthu.edu.tw/course/74) 以及 [10910CS542200](http://lms.nthu.edu.tw/course/46274):
 
 ```
 ilmsdump 74 46274
@@ -56,7 +56,7 @@ ilmsserve
 
 預設網址為 http://localhost:8080 ，可用 --port 來改
 
-Or:
+Or
 
 ```
 podman run --rm --mount type=bind,source=$PWD/ilmsdump.out,target=/data,ro=true -p 8080:8080 ghcr.io/afq984/ilmsserve:main
@@ -78,6 +78,8 @@ podman run --rm --mount type=bind,source=$PWD/ilmsdump.out,target=/data,ro=true 
     *   附件 ✔️
     *   Evercam/Powercam 影片 ✔️
     *   討論 ❌
+*   討論區 ✔️
+    *   附件 ✔️
 *   作業 ✔️
     *   作業資訊 ✔️
         *   附件 ✔️
@@ -91,8 +93,6 @@ podman run --rm --mount type=bind,source=$PWD/ilmsdump.out,target=/data,ro=true 
 *   線上測驗 ❌
 *   出缺勤(統計) ❌
 *   成績計算 ✔️
-*   討論區 ✔️
-    *   附件 ✔️
 *   小組專區 ✔️
     *   討論 ❌
 
