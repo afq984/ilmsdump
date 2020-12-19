@@ -42,6 +42,12 @@ ilmsdump 74 46274
 ilmsdump enrolled
 ```
 
+#### 只列出課程不下載
+
+```
+ilmsdump --dry enrolled
+```
+
 ### 查看使用說明
 
 ```
