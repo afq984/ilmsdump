@@ -1,9 +1,5 @@
 {% extends "course.html.j2" %}
 
 {% block pathextra %}
-{% if 'submittedhomework' in item.children %}
 <li><a href="{{ item.get_url() / 'submissions' }}">可下載 ({{ item.children.get('submittedhomework', ()) | length }})</a></li>
-{% else %}
-<li class="is-active"><a href="#">可下載 (0)</a></li>
-{% endif %}
 {% endblock %}

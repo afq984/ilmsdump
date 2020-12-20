@@ -3,5 +3,9 @@
 {% from "table.html.j2" import table %}
 
 {% block main %}
+{% if 'submittedhomework' in item.children %}
 {{ table(item.children.submittedhomework) }}
+{% else %}
+no submissions found ¯\_(ツ)_/¯
+{% endif %}
 {% endblock %}
