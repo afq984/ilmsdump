@@ -9,8 +9,8 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-WIDTH = 26
-HEIGHT = 16
+WIDTH = 16
+HEIGHT = 26
 SIZE = WIDTH * HEIGHT
 
 MATCHERS = [
@@ -61,8 +61,8 @@ def request(session: aiohttp.ClientSession) -> aiohttp.ClientResponse:
     return session.get(
         'http://lms.nthu.edu.tw/sys/lib/class/csecimg.php',
         params={
-            'width': 16,
-            'height': 26,
+            'width': WIDTH,
+            'height': HEIGHT,
             'characters': 1,
             'rk': str(random.random()),
         },
