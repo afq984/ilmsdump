@@ -377,7 +377,7 @@ class CoursePHP(View):
             return f'/course/{courseID}/discussion'
         if f == 'hwlist':
             return f'/course/{courseID}/homework'
-        if f == 'score':
+        if f in ('score', 'score_edit'):
             return f'/course/{courseID}/score'
         if f in {
             'group',
