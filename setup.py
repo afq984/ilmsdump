@@ -47,6 +47,7 @@ setup(
             'pytest',
             'pytest-asyncio',
             'pytest-cov',
+            'pyside6',
         ],
     },
     entry_points={
