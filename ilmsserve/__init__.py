@@ -417,16 +417,26 @@ class CoursePHP(View):
 
 
 ICON_MAPPING = {
-    'check.gif': 'done',
-    'web.gif': 'home',
-    'item2.gif': 'attachment',
-    'mail.png': 'email',
-    'wait.gif': 'hourglass_top',
-    'zoom.jpg': 'zoom_in',
-    'lock.gif': 'lock',
     'cal_homework.gif': 'grading',
-    'edit2.gif': 'edit',
+    'check.gif': 'done',
     'delete2.gif': 'delete',
+    'discuss.gif': 'forum',
+    'doc2.gif': 'description',
+    'edit2.gif': 'edit',
+    'find.png': 'search',
+    'hot.gif': 'whatshot',
+    'info.gif': 'info',
+    'item2.gif': 'attachment',
+    'link_doc.gif': 'description',
+    'lock.gif': 'lock',
+    'mail.png': 'email',
+    'phone.gif': 'phone',
+    'printer.gif': 'print',
+    'rss.gif': 'rss_feed',
+    'wait.gif': 'hourglass_top',
+    'web.gif': 'home',
+    'webhd.gif': 'cloud',
+    'zoom.jpg': 'zoom_in',
 }
 
 
