@@ -20,7 +20,7 @@ import signal
 import sys
 import time
 import types
-from typing import AsyncGenerator, Awaitable, Iterator, List, Optional, Union
+from typing import AsyncGenerator, Awaitable, Iterable, Iterator, List, Optional, Union
 
 import aiohttp
 import click
@@ -50,6 +50,10 @@ class UserError(Exception):
 
 
 class Unavailable(Exception):
+    pass
+
+
+class DownloadFailed(Exception):
     pass
 
 
@@ -457,6 +461,8 @@ class Downloader:
         self.fullstats = collections.Counter()
         self.rates = collections.deque(maxlen=20)
         self.rates_str = '  0.00Mbps'
+        self.done: Optional[asyncio.Event] = None
+        self.report_progress_task: Optional[asyncio.Task] = None
 
     def mark_total(self, item):
         self.stats[item.STATS_NAME].total += 1
@@ -499,7 +505,7 @@ class Downloader:
         resume_file.write_bytes(b)
         return resume_file
 
-    async def run(self, items, ignore=()):
+    async def run(self, items: Iterable[Downloadable], ignore=()):
         print('--- Starting Download '.ljust(79, '-'))
 
         items = collections.deque(items)
@@ -507,8 +513,10 @@ class Downloader:
         for item in items:
             self.mark_total(item)
 
-        done = asyncio.Event()
-        report_progress_task = asyncio.create_task(self.periodically_report_progress(done))
+        self.done = asyncio.Event()
+        self.report_progress_task = asyncio.create_task(
+            self.periodically_report_progress(self.done),
+        )
 
         with capture_keyboard_interrupt() as interrupted:
 
@@ -536,7 +544,8 @@ class Downloader:
                         )
                 except Exception:
                     resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
-                    raise Exception(
+                    await self.finish()
+                    raise DownloadFailed(
                         f'Error occurred while handling {item}\n'
                         f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
                         f'Run with --ignore={item.as_id_string()} to ignore this item.'
@@ -549,6 +558,7 @@ class Downloader:
                 if interrupted.is_set():
                     print(file=sys.stderr)
                     resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
+                    await self.finish()
                     print(
                         'Interrupted.\n'
                         f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
@@ -557,14 +567,19 @@ class Downloader:
                     )
                     return
 
-        done.set()
-        await report_progress_task
+        await self.finish()
+
+    async def finish(self):
+        self.done.set()
+        assert self.report_progress_task is not None
+        await self.report_progress_task
 
         self.report_progress()
         print(file=sys.stderr)
         print('--- Summary '.ljust(79, '-'))
         for k, v in self.fullstats.items():
             print(f'{k}: {v}')
+        print('-' * 79)
 
 
 def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
