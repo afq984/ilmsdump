@@ -534,11 +534,18 @@ def make_app(data_dir: str):
     '--data-dir',
     help='Data directory.',
     default='ilmsdump.out',
+    show_default=True,
+)
+@click.option(
+    '--host',
+    type=str,
+    default='localhost',
+    show_default=True,
 )
 @click.option(
     '--port',
     type=int,
 )
-def main(data_dir: str, port: Optional[int]):
+def main(data_dir: str, *, host: str, port: Optional[int]):
     app = make_app(data_dir=data_dir)
-    web.run_app(app, port=port)
+    web.run_app(app, host=host, port=port)
