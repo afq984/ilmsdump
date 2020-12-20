@@ -84,7 +84,15 @@ class ApplicationContext:
         return Object.from_name(self, name)
 
     def get(self, typename, id):
-        return Object(self, typename, id)
+        """
+        get object; should be only called from request handlers
+        """
+        try:
+            obj = Object(self, typename, id)
+            obj.meta
+            return obj
+        except FileNotFoundError:
+            raise web.HTTPNotFound
 
     def get_all(self, typename):
         for path in (self.data_dir / typename).glob('*/meta.json'):
