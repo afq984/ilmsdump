@@ -1,7 +1,6 @@
 import pathlib
 
 import pytest
-from PIL import Image
 
 from ilmsdump import captcha
 
@@ -26,8 +25,7 @@ def test_hamming_weight():
 def test_match():
     for digit in '123456789':
         filename = HERE / f'{digit}.jpg'
-        im = Image.open(filename)
-        assert captcha.match(im) == digit
+        assert captcha.match(filename.read_bytes()) == digit
 
 
 @pytest.mark.asyncio
