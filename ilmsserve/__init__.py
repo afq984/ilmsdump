@@ -416,7 +416,9 @@ ICON_MAPPING = {
     'wait.gif': 'hourglass_top',
     'zoom.jpg': 'zoom_in',
     'lock.gif': 'lock',
-    'cal_homework.gif': 'edit',
+    'cal_homework.gif': 'grading',
+    'edit2.gif': 'edit',
+    'delete2.gif': 'delete',
 }
 
 
