@@ -422,7 +422,10 @@ ICON_MAPPING = {
 
 def icon_redirect(request):
     filename = request.match_info['filename']
-    icon = ICON_MAPPING[filename]
+    try:
+        icon = ICON_MAPPING[filename]
+    except KeyError:
+        raise web.HTTPNotFound
     raise web.HTTPTemporaryRedirect(
         f'https://fonts.gstatic.com/s/i/materialicons/{icon}/v6/24px.svg'
     )
