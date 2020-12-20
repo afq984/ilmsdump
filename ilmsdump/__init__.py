@@ -7,7 +7,6 @@ import dataclasses
 import functools
 import getpass
 import hashlib
-import io
 import itertools
 import json
 import os
@@ -27,9 +26,6 @@ import click
 import lxml.html
 import wcwidth
 import yarl
-from PIL import Image
-
-from ilmsdump import captcha
 
 DOMAIN = 'lms.nthu.edu.tw'
 LOGIN_URL = 'https://lms.nthu.edu.tw/sys/lib/ajax/login_submit.php'
@@ -237,13 +233,14 @@ class Client:
             await self.login_with_phpsessid(phpsessid)
 
     async def login_with_username_and_password(self, username, password):
+        from ilmsdump import captcha
+
         async with self.session.get('http://lms.nthu.edu.tw/login_page.php') as response:
             await response.read()
 
         async with captcha.request(self.session) as response:
             jpegbin = await response.read()
-        im = Image.open(io.BytesIO(jpegbin))
-        captcha_code = captcha.match(im)
+        captcha_code = captcha.match(jpegbin)
 
         login = self.session.post(
             LOGIN_URL,

@@ -3,6 +3,7 @@ import base64
 import io
 import logging
 import random
+from typing import Optional
 
 import aiohttp
 from PIL import Image
@@ -30,21 +31,22 @@ def process(im):
     return sum((px < 80) << i for i, px in enumerate(im.convert('L').tobytes()))
 
 
-def to_data_uri(im):
-    data = io.BytesIO()
-    im.save(data, 'webp', lossless=True)
-    b64str = base64.b64encode(data.getvalue()).decode('ascii')
-    return f'data:img/webp;base64,{b64str}'
+def to_data_uri(bin: bytes, content_type: str):
+    b64str = base64.b64encode(bin).decode('ascii')
+    return f'data:{content_type};base64,{b64str}'
 
 
 def hamming_weight(value: int) -> int:
     return f'{value:b}'.count('1')
 
 
-def match(im):
-    p = process(im)
+def match(bin: bytes, content_type: Optional[str] = None):
+    im = Image.open(io.BytesIO(bin))
     logger.info('Processing image:')
-    logger.info(to_data_uri(im))
+    if content_type is None:
+        content_type = Image.MIME[im.format]
+    logger.info(to_data_uri(bin, content_type))
+    p = process(im)
     matches, digit = max(
         (
             SIZE - hamming_weight(p ^ matcher),
@@ -70,11 +72,11 @@ def request(session: aiohttp.ClientSession):
 
 
 async def test():
+    logging.basicConfig(level=logging.INFO)
     async with aiohttp.ClientSession() as session:
         async with request(session) as response:
             b = await response.read()
-    im = Image.open(io.BytesIO(b))
-    match(im)
+    match(b, response.content_type)
 
 
 if __name__ == '__main__':
