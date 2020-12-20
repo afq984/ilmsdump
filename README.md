@@ -113,28 +113,32 @@ podman run --rm --mount type=bind,source=$PWD/ilmsdump.out,target=/data,ro=true 
 
 ## Development
 
+Install in editable mode for easy modification & testing:
+
 ```
-cd ilmsdump
-pip install -e .[dev]
+(venv) pip install -e .[dev]
 ```
+
+[nox](https://nox.thea.codes/) is used to drive the tests.
 
 ### Testing
 
 ```
-pytest tests
+python -m pytest tests
+# or
+nox -s test
 ```
 
 ### Linting
 
 ```
-flake8 ilmsdump setup.py tests
+nox -s lint
 ```
 
 ### Format Code
 
 ```
-isort ilmsdump ilmsserve setup.py
-black .
+nox -s format
 ```
 
 ### Report Issues
