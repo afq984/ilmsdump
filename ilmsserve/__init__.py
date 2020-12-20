@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import functools
 import json
@@ -16,12 +18,12 @@ here = pathlib.Path(__file__).parent.resolve()
 
 @dataclasses.dataclass
 class Object:
-    ctx: 'ApplicationContext'
-    typename: 'str'
+    ctx: ApplicationContext
+    typename: str
     id: int
 
     @classmethod
-    def from_name(cls, ctx: 'ApplicationContext', name: 'str'):
+    def from_name(cls, ctx: ApplicationContext, name: str):
         typename, _, id = name.partition('-')
         return cls(ctx, typename.lower(), int(id))
 
@@ -65,7 +67,7 @@ class Object:
             return json.load(file)
 
     def to_path_frag(self, by):
-        return PathFrag(self.get_url(), self.meta[by])
+        return PathFrag(str(self.get_url()), self.meta[by])
 
     def __repr__(self):
         return f'<Object {self.typename} {self.id}>'
@@ -193,6 +195,8 @@ class CourseView(View):
 class ListView(CourseView):
     template_name = 'list.html.j2'
 
+    menu_item: MenuItem
+
     def prepare(self):
         return {
             **super().prepare(),
@@ -203,7 +207,7 @@ class ListView(CourseView):
         return [
             PATH_FRAG_HOME,
             item.to_path_frag('name'),
-            PathFrag(self.menu_item.href(item), self.menu_item.name),
+            PathFrag(str(self.menu_item.href(item)), self.menu_item.name),
         ]
 
 
@@ -224,11 +228,14 @@ class HomeworkListView(ListView):
 
 
 class L2FlatView(CourseView):
+
+    menu_item: MenuItem
+
     def get_path(self, item):
         return [
             PATH_FRAG_HOME,
             item.course.to_path_frag('name'),
-            PathFrag(self.menu_item.href(item), self.menu_item.name),
+            PathFrag(str(self.menu_item.href(item)), self.menu_item.name),
         ]
 
 
@@ -243,6 +250,9 @@ class GroupView(L2FlatView):
 
 
 class L2View(CourseView):
+
+    menu_item: MenuItem
+
     @property
     def item_class(self):
         return self.menu_item.typename
@@ -251,7 +261,7 @@ class L2View(CourseView):
         return [
             PATH_FRAG_HOME,
             item.course.to_path_frag('name'),
-            PathFrag(self.menu_item.href(item.course), self.menu_item.name),
+            PathFrag(str(self.menu_item.href(item.course)), self.menu_item.name),
             item.to_path_frag('title'),
         ]
 
@@ -418,7 +428,7 @@ def icon_redirect(request):
     )
 
 
-def fix_img_src(data: json):
+def fix_img_src(data: dict):
     for post in data['posts']['items']:
         if not post['note'].strip():
             continue

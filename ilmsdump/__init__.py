@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import collections
 import contextlib
@@ -18,7 +20,7 @@ import signal
 import sys
 import time
 import types
-from typing import AsyncGenerator, Awaitable, Iterable, List, Optional, Union
+from typing import AsyncGenerator, Awaitable, Iterator, List, Optional, Union
 
 import aiohttp
 import click
@@ -92,7 +94,7 @@ def as_empty_async_generator(func):
 
 
 @contextlib.contextmanager
-def capture_keyboard_interrupt() -> Iterable[asyncio.Event]:
+def capture_keyboard_interrupt() -> Iterator[asyncio.Event]:
     event = asyncio.Event()
 
     def handler(signum, frame):
@@ -196,7 +198,9 @@ class Client:
                 await self.interactive_login()
                 with open(self.cred_path, 'w') as file:
                     print(
-                        self.session.cookie_jar.filter_cookies(LOGIN_STATE_URL)['PHPSESSID'].value,
+                        self.session.cookie_jar.filter_cookies(yarl.URL(LOGIN_STATE_URL))[
+                            'PHPSESSID'
+                        ].value,
                         file=file,
                     )
                 self.log('Saved credentials to', self.cred_path)
@@ -395,7 +399,7 @@ class Client:
             page += 1
         print()
 
-    def get_dir_for(self, item: 'Downloadable') -> pathlib.Path:
+    def get_dir_for(self, item: Downloadable) -> pathlib.Path:
         d = self.data_dir / item.__class__.__name__.lower() / str(item.id)
         d.mkdir(parents=True, exist_ok=True)
         return d
@@ -403,10 +407,11 @@ class Client:
 
 class Downloadable:
 
-    _CLASSES = []
+    _CLASSES: List[str] = []
+    id: int
 
     @as_empty_async_generator
-    async def download(self, client) -> AsyncGenerator['Downloadable', None]:
+    async def download(self, client):
         pass
 
     def as_id_string(self):
@@ -508,16 +513,6 @@ class Downloader:
         with capture_keyboard_interrupt() as interrupted:
 
             while items:
-                if interrupted.is_set():
-                    print(file=sys.stderr)
-                    resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
-                    print(
-                        'Interrupted.\n'
-                        f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
-                        f'Run with --ignore={item.as_id_string()} to ignore this item.'
-                    )
-                    return
-
                 item = items[0]
 
                 if item.__class__.__name__ in ignore or item.as_id_string() in ignore:
@@ -550,6 +545,17 @@ class Downloader:
                 items.popleft()
                 items.extend(item_children)
                 self.mark_completed(item)
+
+                if interrupted.is_set():
+                    print(file=sys.stderr)
+                    resume_file = self.create_resume_file(dict(items=items, ignore=ignore))
+                    print(
+                        'Interrupted.\n'
+                        f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
+                        f'Run with --ignore={item.as_id_string()} to ignore this item.',
+                        file=sys.stderr,
+                    )
+                    return
 
         done.set()
         await report_progress_task
@@ -587,7 +593,7 @@ def table_is_empty(html: lxml.html.HtmlElement) -> bool:
     return False
 
 
-def get_attachments(parent: Downloadable, element: lxml.html.HtmlElement) -> Iterable['Attachment']:
+def get_attachments(parent: Downloadable, element: lxml.html.HtmlElement) -> Iterator['Attachment']:
     ids = set()
     for a in element.xpath('.//a[starts-with(@href, "/sys/read_attach.php")]'):
         if a.text is None or not a.text.strip():
@@ -1002,6 +1008,10 @@ class SinglePageDownloadable(Downloadable):
     course: Course
 
     STATS_NAME = 'Page'
+
+    @property
+    def extra_params(self) -> dict:
+        raise NotImplementedError
 
     @property
     def id(self):

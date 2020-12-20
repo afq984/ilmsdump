@@ -57,7 +57,7 @@ def match(im):
     return digit
 
 
-def request(session: aiohttp.ClientSession) -> aiohttp.ClientResponse:
+def request(session: aiohttp.ClientSession):
     return session.get(
         'http://lms.nthu.edu.tw/sys/lib/class/csecimg.php',
         params={
