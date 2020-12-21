@@ -2,7 +2,7 @@
 
 ![Test](https://github.com/afq984/ilmsdump/workflows/Test/badge.svg) ![Lint](https://github.com/afq984/ilmsdump/workflows/Lint/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/afq984/ilmsdump/badge.svg?branch=main)](https://coveralls.io/github/afq984/ilmsdump?branch=main)
 
-[Online demo](https://ilmsdump.afq984.org)
+[Online demo](https://ilmsdump.afq984.net)
 
 ## Installation
 
