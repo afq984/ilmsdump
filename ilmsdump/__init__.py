@@ -1160,6 +1160,10 @@ def validate_course_id(ctx, param, value: str):
     return result
 
 
+class CLISystemExit(SystemExit):
+    pass
+
+
 @click.command(
     help="""
         Dump the courses given by their ID.
@@ -1218,6 +1222,11 @@ def validate_course_id(ctx, param, value: str):
     metavar='FILE',
     help='Resume download',
 )
+@click.option(
+    '--no-resume-check',
+    is_flag=True,
+    help='Allow --resume and COURSE_IDS specified at the same time',
+)
 @click.argument(
     'course_ids',
     nargs=-1,
@@ -1233,7 +1242,17 @@ async def main(
     dry: bool,
     resume: str,
     ignore: list,
+    no_resume_check: bool,
 ):
+    if not no_resume_check:
+        if resume is not None and course_ids:
+            raise CLISystemExit(
+                '''\
+Error. Under usual cases, you do not need to specify COURSE_IDS when resuming.
+Specifying --resume and COURSE_IDS at the same time may download a resource multiple times.
+You can add --no-resume-check to bypass this check if you are sure what you are doing.'''
+            )
+
     async with Client(data_dir=output_dir) as client:
         d = Downloader(client=client)
         changed = False
