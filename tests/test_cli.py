@@ -79,6 +79,32 @@ def test_resume(tempdir):
         assert os.path.exists(os.path.join(tempdir, sub))
 
 
+def test_resume_check(tempdir):
+    resume_file = os.path.join(tempdir, 'resmue.pickle')
+    with open(resume_file, 'wb') as file:
+        pickle.dump({'items': [data.COURSE_399], 'ignore': []}, file)
+
+    runner = click.testing.CliRunner(mix_stderr=False)
+
+    result = runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '--resume', resume_file, '399'])
+    assert isinstance(result.exception, ilmsdump.CLISystemExit)
+
+
+def test_no_resume_check(tempdir):
+    resume_file = os.path.join(tempdir, 'resmue.pickle')
+    with open(resume_file, 'wb') as file:
+        pickle.dump({'items': [data.COURSE_399], 'ignore': []}, file)
+
+    runner = click.testing.CliRunner(mix_stderr=False)
+
+    result = runner.invoke(
+        ilmsdump.main,
+        ['--output-dir', tempdir, '--resume', resume_file, '399', '--no-resume-check', '--dry'],
+    )
+
+    assert result.exception is None
+
+
 def test_ignore(tempdir):
     runner = click.testing.CliRunner(mix_stderr=False)
     runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '399', '--ignore', 'Announcement'])
