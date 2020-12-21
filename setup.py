@@ -30,6 +30,7 @@ setup(
     keywords='NTHU, iLMS',
     packages=['ilmsdump', 'ilmsserve'],
     package_data={
+        'ilmsdump': ['gui/ilmsdump.ui'],
         'ilmsserve': ['templates/*.j2'],
     },
     python_requires='>=3.8, <4',
@@ -47,6 +48,8 @@ setup(
             'pytest',
             'pytest-asyncio',
             'pytest-cov',
+        ],
+        'gui': [
             'pyside6',
         ],
     },

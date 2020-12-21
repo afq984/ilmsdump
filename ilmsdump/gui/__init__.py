@@ -1,35 +1,55 @@
-from PySide2.QtUiTools import QUiLoader
-from PySide2.QtWidgets import QApplication, QLineEdit, QPushButton, QLabel, QTextEdit, QTextBrowser
-from PySide2.QtCore import QFile, QObject, Signal, QThread, Slot, QCoreApplication, Qt
-import sys
-import ilmsdump
 import asyncio
-import threading
+import sys
 from datetime import datetime
 
-courses = []
+from PySide6.QtCore import QCoreApplication, QFile, QObject, Qt, QThread
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtWidgets import QApplication, QLineEdit, QPushButton, QTextBrowser
+
+import ilmsdump
+
 target_path = '.'
+
 
 def addTextBrowser(text_browser, text):
     text_browser.setText(text_browser.toPlainText() + text)
 
+
 async def get_enrolled_courses(client, log):
-    global courses
-    tmp_courses = []
+    courses = []
     try:
-        await [tmp_courses.append(i) async for i in client.get_enrolled_courses()]
-    except:
+        await [courses.append(i) async for i in client.get_enrolled_courses()]
+    except TypeError:
         pass
-    courses = tmp_courses
-    for i in tmp_courses:
+    for i in courses:
         log(i.name + '\n')
     log('\n == finish == \n\n')
+    return courses
+
+
+# TODO
+
+
+class DownloadThread(QThread):
+    def __init__(self):
+        QThread.__init__(self)
+        self.log = None
+        self.courses = None
+        self.downloader = None
+
+    def set(self, log, courses, downloader):
+        self.log = log
+        self.courses = courses
+        self.downloader = downloader
+
+    def run(self):
+        self.log(f"download is starting... {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        self.downloader.run(self.courses, [])
+        self.log(f"download finished. {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+
 
 class Form(QObject):
-
     def __init__(self, ui_file, parent=None):
-        self.loop = asyncio.get_event_loop()
-
         # load ui file
         super(Form, self).__init__(parent)
         ui_file = QFile(ui_file)
@@ -51,7 +71,9 @@ class Form(QObject):
         self.show_enrolled_btn.clicked.connect(self.show_enrolled)
         self.download_btn.clicked.connect(self.download)
 
+        self.loop = asyncio.get_event_loop()
         self.client = ilmsdump.Client(target_path)
+        self.download_thread = DownloadThread()
         self.window.show()
 
     def test_login(self):
@@ -59,37 +81,39 @@ class Form(QObject):
         account = self.account.text()
         password = self.password.text()
         try:
-            self.loop.run_until_complete(self.client.login_with_username_and_password(account, password))
+            self.loop.run_until_complete(
+                self.client.login_with_username_and_password(account, password)
+            )
             self.log('login success\n')
             return True
-        except s:
+        except ilmsdump.LoginFailed:
             self.log('login fail\n')
             return False
 
     def show_enrolled(self):
         self.log('== showing the enrolled courses == \n')
-        try:
-            if not self.test_login(): return
-            self.loop.run_until_complete( get_enrolled_courses(self.client, self.log) )
-        except:
-            pass
+        if not self.test_login():
+            return
+        self.courses = self.loop.run_until_complete(get_enrolled_courses(self.client, self.log))
 
     def log(self, text):
         addTextBrowser(self.logBrowser, text)
-        self.logBrowser.verticalScrollBar().setValue( self.logBrowser.verticalScrollBar().maximum() )
+        self.logBrowser.verticalScrollBar().setValue(self.logBrowser.verticalScrollBar().maximum())
 
     def download(self):
         self.show_enrolled()
-        self.log(f"download is starting... {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         self.logBrowser.repaint()
         d = ilmsdump.Downloader(client=self.client)
-        print(courses)
-        self.loop.run_until_complete( d.run(list(courses), []) )
+        self.log(f"download is starting... {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        self.loop.run_until_complete(d.run(self.courses, []))
         self.log(f"download finished. {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        # TODO
+        # self.download_thread.set(self.log, self.courses, d)
+        # self.download_thread.start()
+
 
 if __name__ == "__main__":
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
     form = Form("ilmsdump.ui")
     sys.exit(app.exec_())
-
