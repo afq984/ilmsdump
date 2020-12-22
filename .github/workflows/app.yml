@@ -3,7 +3,7 @@ name: Packaging
 on: ["push"]
 
 jobs:
-  pyinstaller:
+  cx_Freeze:
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
