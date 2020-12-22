@@ -50,7 +50,7 @@ setup(
             'pytest-cov',
         ],
         'gui': [
-            'pyside6',
+            'pyside2',
         ],
     },
     entry_points={

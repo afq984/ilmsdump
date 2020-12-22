@@ -3,9 +3,9 @@ import sys
 from datetime import datetime
 
 import pkg_resources
-from PySide6.QtCore import QCoreApplication, QFile, QObject, Qt, QThread
-from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QApplication, QLineEdit, QPushButton, QTextBrowser
+from PySide2.QtCore import QCoreApplication, QFile, QObject, Qt, QThread
+from PySide2.QtUiTools import QUiLoader
+from PySide2.QtWidgets import QApplication, QLineEdit, QPushButton, QTextBrowser
 
 import ilmsdump
 
