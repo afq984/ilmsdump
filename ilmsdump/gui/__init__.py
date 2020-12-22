@@ -2,12 +2,12 @@ import asyncio
 import sys
 from datetime import datetime
 
-import pkg_resources
 from PySide2.QtCore import QCoreApplication, QFile, QObject, Qt, QThread
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import QApplication, QLineEdit, QPushButton, QTextBrowser
 
 import ilmsdump
+from ilmsdump.gui import hacks
 
 target_path = '.'
 
@@ -56,15 +56,12 @@ class Form(QObject):
         super().__init__(parent)
 
         # load ui file
-        try:
-            ui_filename = pkg_resources.resource_filename(__name__, "ilmsdump.ui")
+        with hacks.get_ui_filename() as ui_filename:
             ui_file = QFile(ui_filename)
             ui_file.open(QFile.ReadOnly)
             loader = QUiLoader()
             self.window = loader.load(ui_file)
             ui_file.close()
-        finally:
-            pkg_resources.cleanup_resources()
 
         # bind widget
         self.logBrowser = self.window.findChild(QTextBrowser, "log")

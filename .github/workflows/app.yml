@@ -3,7 +3,7 @@ name: Packaging
 on: ["push"]
 
 jobs:
-  cx_Freeze:
+  pyinstaller:
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
@@ -16,8 +16,8 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: '3.x'
-    - run: pip install cx_Freeze .[gui]
-    - run: cxfreeze misc/ilmsdump-gui.py
+    - run: pip install pyinstaller .[gui]
+    - run: pyinstaller misc/ilmsdump-gui.py --hidden-import=PySide2.QtXml
 
     - uses: actions/upload-artifact@v2
       with:
