@@ -11,14 +11,18 @@ import ilmsdump
 target_path = '.'
 
 
-def addTextBrowser(text_browser, text):
+def add_2_text_browser(text_browser, text):
     text_browser.setText(text_browser.toPlainText() + text)
+
+
+def now():
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
 async def get_enrolled_courses(client, log):
     courses = []
     try:
-        await [courses.append(i) async for i in client.get_enrolled_courses()]
+        courses = [course async for course in ilmsdump.foreach_course(client, ['enrolled'])]
     except TypeError:
         pass
     for i in courses:
@@ -27,10 +31,8 @@ async def get_enrolled_courses(client, log):
     return courses
 
 
-# TODO
-
-
 class DownloadThread(QThread):
+    # TODO: make it run properly
     def __init__(self):
         QThread.__init__(self)
         self.log = None
@@ -43,9 +45,9 @@ class DownloadThread(QThread):
         self.downloader = downloader
 
     def run(self):
-        self.log(f"download is starting... {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        self.log(f"download is starting... {now()}\n")
         self.downloader.run(self.courses, [])
-        self.log(f"download finished. {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        self.log(f"download finished. {now()}\n")
 
 
 class Form(QObject):
@@ -97,17 +99,18 @@ class Form(QObject):
         self.courses = self.loop.run_until_complete(get_enrolled_courses(self.client, self.log))
 
     def log(self, text):
-        addTextBrowser(self.logBrowser, text)
+        add_2_text_browser(self.logBrowser, text)
         self.logBrowser.verticalScrollBar().setValue(self.logBrowser.verticalScrollBar().maximum())
 
     def download(self):
         self.show_enrolled()
         self.logBrowser.repaint()
         d = ilmsdump.Downloader(client=self.client)
-        self.log(f"download is starting... {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        self.log(f"download is starting... {now()}\n")
         self.loop.run_until_complete(d.run(self.courses, []))
-        self.log(f"download finished. {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        # TODO
+        self.log(f"download finished. {now()}\n")
+        # TODO: make it run without the following error:
+        #   Cannot create children for a parent that is in a different thread
         # self.download_thread.set(self.log, self.courses, d)
         # self.download_thread.start()
 
