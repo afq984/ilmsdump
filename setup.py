@@ -28,7 +28,7 @@ setup(
         'Programming Language :: Python :: 3 :: Only',
     ],
     keywords='NTHU, iLMS',
-    packages=['ilmsdump', 'ilmsserve'],
+    packages=['ilmsdump', 'ilmsdump.gui', 'ilmsserve'],
     package_data={
         'ilmsdump': ['gui/ilmsdump.ui'],
         'ilmsserve': ['templates/*.j2'],
