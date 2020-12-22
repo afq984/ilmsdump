@@ -17,7 +17,8 @@ jobs:
       with:
         python-version: '3.x'
     - run: pip install pyinstaller .[gui]
-    - run: pyinstaller --windowed --onefile ilmsdump/gui/__init__.py
+    - run: echo 'from ilmsdump.gui import main; main()' > ilmsdump-gui.py
+    - run: pyinstaller --windowed --onefile ilmsdump-gui.py
 
     - uses: actions/upload-artifact@v2
       with:

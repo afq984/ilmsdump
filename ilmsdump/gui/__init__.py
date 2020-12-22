@@ -2,6 +2,7 @@ import asyncio
 import sys
 from datetime import datetime
 
+import pkg_resources
 from PySide6.QtCore import QCoreApplication, QFile, QObject, Qt, QThread
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication, QLineEdit, QPushButton, QTextBrowser
@@ -51,14 +52,19 @@ class DownloadThread(QThread):
 
 
 class Form(QObject):
-    def __init__(self, ui_file, parent=None):
-        # load ui file
+    def __init__(self, parent=None):
         super().__init__(parent)
-        ui_file = QFile(ui_file)
-        ui_file.open(QFile.ReadOnly)
-        loader = QUiLoader()
-        self.window = loader.load(ui_file)
-        ui_file.close()
+
+        # load ui file
+        try:
+            ui_filename = pkg_resources.resource_filename(__name__, "ilmsdump.ui")
+            ui_file = QFile(ui_filename)
+            ui_file.open(QFile.ReadOnly)
+            loader = QUiLoader()
+            self.window = loader.load(ui_file)
+            ui_file.close()
+        finally:
+            pkg_resources.cleanup_resources()
 
         # bind widget
         self.logBrowser = self.window.findChild(QTextBrowser, "log")
@@ -76,6 +82,11 @@ class Form(QObject):
         self.loop = asyncio.get_event_loop()
         self.client = ilmsdump.Client(target_path)
         self.download_thread = DownloadThread()
+
+    def show(self):
+        # no doing it in __init__ to avoid
+        # F841 local variable 'form' is assigned to but never used
+        # in caller
         self.window.show()
 
     def test_login(self):
@@ -115,8 +126,9 @@ class Form(QObject):
         # self.download_thread.start()
 
 
-if __name__ == "__main__":
+def main():
     QCoreApplication.setAttribute(Qt.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
-    form = Form("ilmsdump.ui")
+    form = Form()
+    form.show()
     sys.exit(app.exec_())
