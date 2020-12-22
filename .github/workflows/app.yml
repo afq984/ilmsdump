@@ -1,0 +1,22 @@
+name: Container
+
+on: ["push"]
+
+jobs:
+  pyinstaller:
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macOS, windows]
+
+    steps:
+
+    - uses: actions/checkout@v2
+    - run: pip install pyinstaller .[gui]
+    - run: pyinstaller --windowed --onefile ilmsdump/gui/__init__.py
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix-os }}
+        path: dist
