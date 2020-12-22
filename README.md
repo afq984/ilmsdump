@@ -12,6 +12,8 @@ Requirements: Python 3.8 or later
 python -m pip install -U https://github.com/afq984/ilmsdump/archive/main.zip
 ```
 
+The same command can be used to update to the latest version.
+
 You may want to specify `--user`, or install in a [virtual environment].
 
 ## Usage Examples
