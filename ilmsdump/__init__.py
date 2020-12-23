@@ -33,24 +33,51 @@ LOGIN_STATE_URL = 'https://lms.nthu.edu.tw/home.php'
 COURSE_LIST_URL = 'https://lms.nthu.edu.tw/home.php?f=allcourse'
 
 
-class LoginFailed(Exception):
-    pass
+class ILMSError(Exception):
+    """Base exception class for ilmsdump"""
 
 
-class CannotUnderstand(Exception):
-    pass
+class LoginFailed(ILMSError):
+    """Failed to login"""
 
 
-class UserError(Exception):
-    pass
+class CannotUnderstand(ILMSError):
+    """Server returned something unexpected"""
 
 
-class Unavailable(Exception):
-    pass
+class UserError(ILMSError):
+    """Invalid user input"""
 
 
-class DownloadFailed(Exception):
-    pass
+class Unavailable(ILMSError):
+    """Requested resource does not exist"""
+
+    @classmethod
+    def check(cls, html: lxml.html.HtmlElement):
+        errors = html.xpath('//body/div[count(./*)=0]/text()')
+        if errors:
+            raise cls(errors[0])
+
+
+class DownloadFailed(ILMSError):
+    """Failed to perform download"""
+
+
+class NoPermission(ILMSError):
+    """
+    No Permission! Read permission : Only open for teacher and TA
+    權限不足! 目前課程的閱讀權限為 : 不開放(僅老師及助教可以閱讀)
+    """
+
+    @classmethod
+    def check(cls, html: lxml.html.HtmlElement):
+        no_permission = html.xpath(
+            '//div[contains(@style, "color:#F00;") and '
+            '(starts-with(text(), "權限不足!") or starts-with(text(), "No Permission!"))]'
+            '/text()'
+        )
+        if no_permission:
+            raise cls(*no_permission)
 
 
 def as_sync(func):
@@ -135,6 +162,24 @@ def qs_get(url: str, key: str) -> str:
         return purl.query[key]
     except KeyError:
         raise KeyError(key, url) from None
+
+
+@functools.singledispatch
+def quote_path(path):
+    raise NotImplementedError
+
+
+@quote_path.register
+def _(path: pathlib.PurePosixPath):
+    return shlex.quote(str(path))
+
+
+@quote_path.register
+def _(path: pathlib.PureWindowsPath):
+    pathstr = str(path)
+    if '"' in pathstr:
+        raise ValueError(f'Invalid path containing double quotes: {path!r}')
+    return f'"{pathstr}"'
 
 
 class Client:
@@ -272,7 +317,7 @@ class Client:
 
     async def get_login_state(self):
         async with self.session.get(LOGIN_STATE_URL) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
 
             if not html.xpath('//*[@id="login"]'):
                 return None
@@ -300,7 +345,7 @@ class Client:
             if response.url.path == '/course_login.php':
                 raise UserError(f'No access to course: course_id={course_id}')
 
-            body = await response.read()
+            body = await response.text()
             if not body:
                 raise UserError(
                     'Empty response returned for course, '
@@ -332,13 +377,15 @@ class Client:
 
     async def get_enrolled_courses(self) -> AsyncGenerator['Course', None]:
         async with self.session.get(COURSE_LIST_URL) as response:
-            body = await response.read()
-            if b'\xe6\xac\x8a\xe9\x99\x90\xe4\xb8\x8d\xe8\xb6\xb3!' in body:
-                # '權限不足!'
-                raise UserError('Cannot get enrolled courses. Are you logged in?')
+            body = await response.text()
             html = lxml.html.fromstring(body)
 
-            for a in html.xpath('//td[@class="listTD"]/a'):
+            try:
+                Unavailable.check(html)
+            except Unavailable:
+                raise UserError('Cannot get enrolled courses. Are you logged in?')
+
+            for a in html.xpath('.//td[@class="listTD"]/a'):
                 bs = a.xpath('b')
                 if bs:
                     is_admin = True
@@ -374,7 +421,7 @@ class Client:
                     'page': page,
                 },
             ) as response:
-                html = lxml.html.fromstring(await response.read())
+                html = lxml.html.fromstring(await response.text())
 
             total_pages_strs = html.xpath('//input[@id="PageCombo"]/following-sibling::text()')
             if total_pages_strs:
@@ -544,7 +591,7 @@ class Downloader:
                     await self.finish()
                     raise DownloadFailed(
                         f'Error occurred while handling {item}\n'
-                        f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
+                        f'Run with --resume={quote_path(resume_file)} to resume download.\n'
                         f'Run with --ignore={item.as_id_string()} to ignore this item.'
                     )
 
@@ -558,7 +605,7 @@ class Downloader:
                     await self.finish()
                     print(
                         'Interrupted.\n'
-                        f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
+                        f'Run with --resume={quote_path(resume_file)} to resume download.\n'
                         f'Run with --ignore={item.as_id_string()} to ignore this item.',
                         file=sys.stderr,
                     )
@@ -580,6 +627,7 @@ class Downloader:
 
 
 def html_get_main(html: lxml.html.HtmlElement) -> lxml.html.HtmlElement:
+    NoPermission.check(html)
     mains = html.xpath('//div[@id="main"]')
     if not mains:
         raise Unavailable(
@@ -655,10 +703,8 @@ class Course(Downloadable):
                 'f': 'syllabus',
             },
         ) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
 
-        if html.xpath('//input[@id="loginAccount"]'):
-            raise UserError('Must login')
         main = html_get_main(html)
         with (client.get_dir_for(self) / 'index.html').open('wb') as file:
             file.write(lxml.html.tostring(main))
@@ -674,7 +720,7 @@ class Course(Downloadable):
                     'page': page,
                 },
             ) as response:
-                html = lxml.html.fromstring(await response.read())
+                html = lxml.html.fromstring(await response.text())
 
                 if table_is_empty(html):
                     break
@@ -701,8 +747,13 @@ class Course(Downloadable):
     async def get_materials(self, client) -> AsyncGenerator['Material', None]:
         async for html in self._item_paginator(client, 'doclist'):
             for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a'):
+                url = yarl.URL(a.attrib['href'])
+                if url.path != '/course.php' or url.query['f'] != 'doc':
+                    # linked material (the original copy should still be downloaded)
+                    # TODO: add tests for this
+                    continue
                 yield Material(
-                    id=int(qs_get(a.attrib['href'], 'cid')),
+                    id=int(url.query['cid']),
                     title=a.text,
                     type=a.getparent().attrib['class'],
                     course=self,
@@ -741,7 +792,7 @@ class Course(Downloadable):
                 'courseID': self.id,
             },
         ) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
             if not html.xpath(
                 '//div[@id="main"]//input[@type="button" and @onclick="history.back()"]'
             ):
@@ -756,7 +807,7 @@ class Course(Downloadable):
                 'courseID': self.id,
             },
         ) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
             if not table_is_empty(html):
                 yield GroupList(course=self)
 
@@ -815,7 +866,7 @@ class Material(Downloadable):
                 'cid': self.id,
             },
         ) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
         main = html_get_main(html)
 
         for attachment in get_attachments(self, main):
@@ -909,7 +960,7 @@ class Homework(Downloadable):
                 'hw': self.id,
             },
         ) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
         main = html_get_main(html)
         for to_remove in main.xpath('.//span[@class="toolWrapper"]'):
             to_remove.getparent().remove(to_remove)
@@ -930,7 +981,7 @@ class Homework(Downloadable):
                 'hw': self.id,
             },
         ) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
 
         main = html_get_main(html)
 
@@ -1004,7 +1055,7 @@ class SubmittedHomework(Downloadable):
                 'cid': self.id,
             },
         ) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
 
         main = html_get_main(html)
 
@@ -1039,7 +1090,7 @@ class SinglePageDownloadable(Downloadable):
                 **self.extra_params,
             },
         ) as response:
-            html = lxml.html.fromstring(await response.read())
+            html = lxml.html.fromstring(await response.text())
             main = html_get_main(html)
 
             with (client.get_dir_for(self) / 'index.html').open('wb') as file:

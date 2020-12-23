@@ -44,6 +44,18 @@ ilmsdump 74 46274
 ilmsdump enrolled
 ```
 
+匯出所有修過的課，略過部份課程、教材：
+
+```
+ilmsdump enrolled --ignore=Course-34674 --ignore=Material-773177
+```
+
+繼續執行中斷的下載：
+
+```
+ilmsdump --resume=path/to/resume-file.pickle
+```
+
 #### 只列出課程不下載
 
 ```
