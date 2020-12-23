@@ -729,8 +729,13 @@ class Course(Downloadable):
     async def get_materials(self, client) -> AsyncGenerator['Material', None]:
         async for html in self._item_paginator(client, 'doclist'):
             for a in html.xpath('//*[@id="main"]//tr[@class!="header"]/td[2]/div/a'):
+                url = yarl.URL(a.attrib['href'])
+                if url.path != '/course.php' or url.query['f'] != 'doc':
+                    # linked material (the original copy should still be downloaded)
+                    # TODO: add tests for this
+                    continue
                 yield Material(
-                    id=int(qs_get(a.attrib['href'], 'cid')),
+                    id=int(url.query['cid']),
                     title=a.text,
                     type=a.getparent().attrib['class'],
                     course=self,
