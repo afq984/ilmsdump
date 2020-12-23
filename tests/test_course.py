@@ -88,3 +88,9 @@ async def test_download(client: ilmsdump.Client):
     assert data.HOMEWORK_198377 in items
     assert data.HOMEWORK_200355 in items
     assert data.GROUPLIST_40596 in items
+
+
+@pytest.mark.asyncio
+async def test_no_permission(client: ilmsdump.Client):
+    with pytest.raises(ilmsdump.NoPermission):
+        [i async for i in data.COURSE_43491.download(client)]

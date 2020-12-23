@@ -62,6 +62,14 @@ COURSE_43492 = ilmsdump.Course(
     name='雲端計算Cloud Computing',
 )
 
+# Not open
+COURSE_43491 = ilmsdump.Course(
+    id=43491,
+    serial='10820CS540300',
+    is_admin=False,
+    name='高等程式語言Advanced Programming Languages',
+)
+
 # With open group homework
 COURSE_5430 = ilmsdump.Course(
     id=5430,
