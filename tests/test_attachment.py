@@ -1,5 +1,3 @@
-import asyncio
-
 import pytest
 
 import ilmsdump
@@ -40,10 +38,6 @@ async def test_download_rename(client: ilmsdump.Client):
     assert (client.get_dir_for(data.ATTACHMENT_2616322) / 'meta_.json').exists()
 
 
-@pytest.mark.xfail(reason='https://github.com/afq984/ilmsdump/issues/12')
 @pytest.mark.asyncio
 async def test_issue_12(client: ilmsdump.Client):
-    async def f():
-        assert [c async for c in data.ATTACHMENT_3847.download(client)] == []
-
-    await asyncio.wait_for(f(), 30)
+    assert [c async for c in data.ATTACHMENT_3847.download(client)] == []
