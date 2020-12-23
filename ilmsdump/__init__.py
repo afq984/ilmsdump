@@ -164,6 +164,24 @@ def qs_get(url: str, key: str) -> str:
         raise KeyError(key, url) from None
 
 
+@functools.singledispatch
+def quote_path(path):
+    raise NotImplementedError
+
+
+@quote_path.register
+def _(path: pathlib.PurePosixPath):
+    return shlex.quote(str(path))
+
+
+@quote_path.register
+def _(path: pathlib.PureWindowsPath):
+    pathstr = str(path)
+    if '"' in pathstr:
+        raise ValueError(f'Invalid path containing double quotes: {path!r}')
+    return f'"{pathstr}"'
+
+
 class Client:
     def __init__(self, data_dir):
         self.bytes_downloaded = 0
@@ -573,7 +591,7 @@ class Downloader:
                     await self.finish()
                     raise DownloadFailed(
                         f'Error occurred while handling {item}\n'
-                        f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
+                        f'Run with --resume={quote_path(resume_file)} to resume download.\n'
                         f'Run with --ignore={item.as_id_string()} to ignore this item.'
                     )
 
@@ -587,7 +605,7 @@ class Downloader:
                     await self.finish()
                     print(
                         'Interrupted.\n'
-                        f'Run with --resume={shlex.quote(str(resume_file))} to resume download.\n'
+                        f'Run with --resume={quote_path(resume_file)} to resume download.\n'
                         f'Run with --ignore={item.as_id_string()} to ignore this item.',
                         file=sys.stderr,
                     )

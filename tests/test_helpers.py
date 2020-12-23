@@ -1,4 +1,5 @@
 import os
+import pathlib
 import signal
 
 import lxml.html
@@ -78,3 +79,20 @@ async def test_capture_keyboard_interrupt():
         assert not interrupted.is_set()
         os.kill(0, getattr(signal, 'CTRL_C_EVENT', signal.SIGINT))
         assert interrupted.is_set()
+
+
+def test_quote_path_posix():
+    assert (
+        ilmsdump.quote_path(pathlib.PurePosixPath('path/containing spaces'))
+        == "'path/containing spaces'"
+    )
+
+
+def test_quote_path_windows():
+    assert (
+        ilmsdump.quote_path(pathlib.PureWindowsPath('path/containing spaces'))
+        == '"path\\containing spaces"'
+    )
+
+    with pytest.raises(ValueError):
+        ilmsdump.quote_path(pathlib.PureWindowsPath('there"s an invalid character'))
