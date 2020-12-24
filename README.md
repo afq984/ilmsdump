@@ -32,7 +32,7 @@ ilmsdump --logout --login
 
 ### 匯出課程
 
-使用網址中的 Course ID 匯出 [0001](http://lms.nthu.edu.tw/course/74) 以及 [10910CS542200](http://lms.nthu.edu.tw/course/46274):
+使用網址中的 Course ID 匯出 [0001](https://lms.nthu.edu.tw/course/74) 以及 [10910CS542200](https://lms.nthu.edu.tw/course/46274):
 
 ```
 ilmsdump 74 46274
@@ -121,7 +121,7 @@ podman run --rm --mount type=bind,source=$PWD/ilmsdump.out,target=/data,ro=true 
 [自iLMS備份課程檔案-浮水印.pdf] [backup]
 
 [virtual environment]: https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment
-[自iLMS備份課程檔案-浮水印.pdf]: http://lms.nthu.edu.tw/sys/read_attach.php?id=2470763
+[自iLMS備份課程檔案-浮水印.pdf]: https://lms.nthu.edu.tw/sys/read_attach.php?id=2470763
 [backup]: https://github.com/afq984/ilmsdump/blob/backup/%E8%87%AAiLMS%E5%82%99%E4%BB%BD%E8%AA%B2%E7%A8%8B%E6%AA%94%E6%A1%88-%E6%B5%AE%E6%B0%B4%E5%8D%B0.pdf
 
 

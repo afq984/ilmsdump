@@ -50,7 +50,7 @@ def test_download(tempdir):
     runner = click.testing.CliRunner(mix_stderr=False)
     runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '399'])
 
-    # http://lms.nthu.edu.tw/course/399
+    # https://lms.nthu.edu.tw/course/399
     # open course having no attachments
 
     for sub in [

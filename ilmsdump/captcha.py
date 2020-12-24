@@ -61,7 +61,7 @@ def match(bin: bytes, content_type: Optional[str] = None):
 
 def request(session: aiohttp.ClientSession):
     return session.get(
-        'http://lms.nthu.edu.tw/sys/lib/class/csecimg.php',
+        'https://lms.nthu.edu.tw/sys/lib/class/csecimg.php',
         params={
             'width': WIDTH,
             'height': HEIGHT,
