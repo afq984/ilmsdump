@@ -78,6 +78,14 @@ COURSE_5430 = ilmsdump.Course(
     name='管理學Management',
 )
 
+# has linked material
+COURSE_35305 = ilmsdump.Course(
+    id=35305,
+    serial='10710CS542200',
+    is_admin=False,
+    name='平行程式Parallel Programming',
+)
+
 ANNOUNCEMENT_2218728 = ilmsdump.Announcement(
     id=2218728,
     title='HW3 成績公佈',
@@ -157,6 +165,14 @@ MATERIAL_1518 = ilmsdump.Material(
     title='PowerCam5 簡報錄影軟體',
     type='Epowercam',
     course=COURSE_74,
+)
+
+# linked material
+MATERIAL_2705536 = ilmsdump.Material(
+    id=2705536,
+    title='PDF 版本投影片＆作業',
+    type='Econtent',
+    course=COURSE_35305,
 )
 
 VIDEO_1518 = ilmsdump.Video(

@@ -94,3 +94,14 @@ async def test_download(client: ilmsdump.Client):
 async def test_no_permission(client: ilmsdump.Client):
     with pytest.raises(ilmsdump.NoPermission):
         [i async for i in data.COURSE_43491.download(client)]
+
+
+@pytest.mark.asyncio
+async def test_linked_material(client: ilmsdump.Client):
+    materials = [m async for m in data.COURSE_35305.get_materials(client)]
+
+    assert data.MATERIAL_2705536 in materials
+
+    for material in materials:
+        if material.id == data.MATERIAL_2705536.id:
+            assert material == data.MATERIAL_2705536
