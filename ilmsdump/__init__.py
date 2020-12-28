@@ -520,7 +520,7 @@ class Downloader:
         dl_size_str = f'{self.client.bytes_downloaded / 1e6:.1f}MB'
         print(
             f'{self.rates_str}  DL:{dl_size_str}  {progress_str}'.ljust(
-                shutil.get_terminal_size().columns
+                max(1, shutil.get_terminal_size().columns - 1)
             ),
             end='\r',
             file=sys.stderr,
