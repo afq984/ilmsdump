@@ -1,3 +1,5 @@
+import dataclasses
+
 import pytest
 
 import ilmsdump
@@ -32,10 +34,26 @@ async def test_download(client: ilmsdump.Client):
 
 @pytest.mark.asyncio
 async def test_download_rename(client: ilmsdump.Client):
+    assert data.ATTACHMENT_2616322.suggest_filename() == 'meta_.json'
+    assert data.ATTACHMENT_2616322.get_meta()['saved_filename'] == 'meta_.json'
+
     assert [c async for c in data.ATTACHMENT_2616322.download(client)] == []
 
     assert not (client.get_dir_for(data.ATTACHMENT_2616322) / 'meta.json').exists()
     assert (client.get_dir_for(data.ATTACHMENT_2616322) / 'meta_.json').exists()
+
+
+@pytest.mark.asyncio
+async def test_download_rename_illegal(client: ilmsdump.Client):
+    attachment = dataclasses.replace(data.ATTACHMENT_2616322, title='>.<.txt')
+
+    assert attachment.suggest_filename() == '_._.txt'
+    assert attachment.get_meta()['saved_filename'] == '_._.txt'
+
+    assert [c async for c in attachment.download(client)] == []
+
+    assert not (client.get_dir_for(attachment) / '>.<.txt').exists()
+    assert (client.get_dir_for(attachment) / '_._.txt').exists()
 
 
 @pytest.mark.asyncio

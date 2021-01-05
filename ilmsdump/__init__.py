@@ -27,6 +27,8 @@ import lxml.html
 import wcwidth
 import yarl
 
+import ilmsdump.fileutil
+
 DOMAIN = 'lms.nthu.edu.tw'
 LOGIN_URL = 'https://lms.nthu.edu.tw/sys/lib/ajax/login_submit.php'
 LOGIN_STATE_URL = 'https://lms.nthu.edu.tw/home.php'
@@ -1136,11 +1138,17 @@ class Attachment(Downloadable):
                         client.bytes_downloaded += len(chunk)
                     file.write(chunk)
 
+    def get_meta(self) -> dict:
+        return {
+            **super().get_meta(),
+            'saved_filename': self.suggest_filename(),
+        }
+
     def suggest_filename(self) -> str:
         name = os.path.basename(self.title)
         if name == 'meta.json':
             return 'meta_.json'
-        return name
+        return ilmsdump.fileutil.replace_illegal_characters_in_path(name, '_')
 
 
 @dataclasses.dataclass

@@ -336,9 +336,18 @@ class SubmissionView(SubmissionListView):
 class AttachmentView(View):
     async def get(self):
         item = self.ctx.get('attachment', self.id)
-        title = filename = item.meta['title']
-        if filename == 'meta.json':
-            filename = 'meta_.json'
+        title = item.meta['title']
+
+        try:
+            # prefer the saved_filename attribute in meta.json, introduced in PR#29
+            filename = item.meta['saved_filename']
+        except KeyError:
+            # fallback to title so we don't break existing downloads
+            if title == 'meta.json':
+                filename = 'meta_.json'
+            else:
+                filename = title
+
         return web.FileResponse(
             item.dir / filename,
             headers={
