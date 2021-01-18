@@ -1,5 +1,6 @@
 """
-This module implemnts
+This module implements illegal filename handling like
+how it is done in chromium
 """
 
 import unicodedata
