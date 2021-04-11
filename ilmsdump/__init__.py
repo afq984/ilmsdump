@@ -239,11 +239,11 @@ class Client:
 
     async def ensure_authenticated(self, prompt: bool):
         try:
-            cred_file = open(self.cred_path)
+            cred_file = open(self.cred_path, encoding='utf-8')
         except FileNotFoundError:
             if prompt:
                 await self.interactive_login()
-                with open(self.cred_path, 'w') as file:
+                with open(self.cred_path, 'w', encoding='utf-8') as file:
                     print(
                         self.session.cookie_jar.filter_cookies(yarl.URL(LOGIN_STATE_URL))[
                             'PHPSESSID'
@@ -580,7 +580,9 @@ class Downloader:
                         item_children.append(child)
                         self.mark_total(child)
 
-                    with (self.client.get_dir_for(item) / 'meta.json').open('w') as file:
+                    with (self.client.get_dir_for(item) / 'meta.json').open(
+                        'w', encoding='utf-8'
+                    ) as file:
                         json.dump(
                             {
                                 **item.get_meta(),
@@ -843,7 +845,7 @@ class Announcement(Downloadable):
             for attachment in get_attachments(self, lxml.html.fromstring(attachment_raw_div)):
                 yield attachment
 
-        with (client.get_dir_for(self) / 'index.json').open('w') as file:
+        with (client.get_dir_for(self) / 'index.json').open('w', encoding='utf-8') as file:
             json.dump(body_json, file)
 
 
@@ -937,7 +939,7 @@ class Discussion(Downloadable):
                         parent=self,
                     )
 
-            with (client.get_dir_for(self) / 'index.json').open('w') as file:
+            with (client.get_dir_for(self) / 'index.json').open('w', encoding='utf-8') as file:
                 json.dump(body_json, file)
 
 
