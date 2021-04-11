@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 import pytest
 
@@ -35,7 +36,7 @@ async def test_get_course_authentication_required(client):
 
 @pytest.mark.asyncio
 async def test_clear_credentials(client):
-    open(client.cred_path, 'w').close()
+    pathlib.Path(client.cred_path).touch()
     assert client.clear_credentials() is True
     assert not os.path.exists(client.cred_path)
 
