@@ -78,7 +78,7 @@ class ApplicationContext:
         self.data_dir = pathlib.Path(data_dir)
 
     def open_base(self, typename, id, filename='meta.json'):
-        return (self.data_dir / typename / str(id) / filename).open()
+        return (self.data_dir / typename / str(id) / filename).open(encoding='utf-8')
 
     def get_name(self, name):
         return Object.from_name(self, name)

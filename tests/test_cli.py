@@ -1,4 +1,5 @@
 import os
+import pathlib
 import pickle
 import tempfile
 
@@ -23,7 +24,7 @@ def test_nothing_to_do(tempdir):
 
 def test_logout(tempdir):
     cred_file = os.path.join(tempdir, 'credentials.txt')
-    open(cred_file, 'w').close()
+    pathlib.Path(cred_file).touch()
 
     runner = click.testing.CliRunner(mix_stderr=False)
     result = runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '--logout'])
@@ -34,7 +35,7 @@ def test_logout(tempdir):
 
 def test_anonymous(tempdir):
     cred_file = os.path.join(tempdir, 'credentials.txt')
-    open(cred_file, 'w').close()
+    pathlib.Path(cred_file).touch()
 
     runner = click.testing.CliRunner(mix_stderr=False)
     result = runner.invoke(ilmsdump.main, ['--output-dir', tempdir, '--anonymous'])
