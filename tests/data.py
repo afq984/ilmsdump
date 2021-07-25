@@ -177,7 +177,7 @@ MATERIAL_2705536 = ilmsdump.Material(
 
 VIDEO_1518 = ilmsdump.Video(
     id=1518,
-    url=yarl.URL('https://lms.nthu.edu.tw/sysdata/74/74/doc/f08b98ab0aeddfd0/video/video_hd.mp4'),
+    url=yarl.URL(f'{ilmsdump.TARGET_ORIGIN}/sysdata/74/74/doc/f08b98ab0aeddfd0/video/video_hd.mp4'),
 )
 
 HOMEWORK_198377 = ilmsdump.Homework(

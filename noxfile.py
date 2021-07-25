@@ -1,3 +1,6 @@
+import os
+import subprocess
+
 import nox
 
 nox.options.reuse_existing_virtualenvs = True
@@ -30,3 +33,23 @@ def lint(session):
 def test(session):
     session.install('-U', '.[dev]')
     session.run('python', '-m', 'pytest', 'tests')
+
+
+@nox.session
+def test_ilmsmock(session):
+    session.install('-U', '.[dev]')
+    session.run('go', 'install', 'github.com/afq984/ilmsmock/cmd/ilmsmock@latest', external=True)
+    gopath = subprocess.check_output(['go', 'env', 'GOPATH']).decode('utf-8').strip()
+    ilmsmock = os.path.join(gopath, 'bin', 'ilmsmock')
+    if os.name == 'nt':
+        ilmsmock += '.exe'
+    session.run(
+        ilmsmock,
+        '--setenv=ILMSDUMP_TARGET_ORIGIN',
+        '--',
+        'python',
+        '-m',
+        'pytest',
+        'tests',
+        external=True,
+    )
