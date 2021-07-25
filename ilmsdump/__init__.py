@@ -29,10 +29,11 @@ import yarl
 
 import ilmsdump.fileutil
 
-DOMAIN = 'lms.nthu.edu.tw'
-LOGIN_URL = 'https://lms.nthu.edu.tw/sys/lib/ajax/login_submit.php'
-LOGIN_STATE_URL = 'https://lms.nthu.edu.tw/home.php'
-COURSE_LIST_URL = 'https://lms.nthu.edu.tw/home.php?f=allcourse'
+LOGIN_DOMAIN = 'lms.nthu.edu.tw'
+TARGET_ORIGIN = os.environ.get('ILMSDUMP_TARGET_ORIGIN', 'https://lms.nthu.edu.tw')
+LOGIN_URL = f'{TARGET_ORIGIN}/sys/lib/ajax/login_submit.php'
+LOGIN_STATE_URL = f'{TARGET_ORIGIN}/home.php'
+COURSE_LIST_URL = f'{TARGET_ORIGIN}/home.php?f=allcourse'
 
 
 class ILMSError(Exception):
@@ -148,7 +149,7 @@ async def _get_workaround_client_response_content_is_traced():
     tc.on_response_chunk_received.append(callback)
 
     async with aiohttp.ClientSession(trace_configs=[tc]) as client:
-        async with client.get('https://lms.nthu.edu.tw') as response:
+        async with client.get(f'{TARGET_ORIGIN}') as response:
             async for chunk in response.content.iter_any():
                 pass
     return is_traced
@@ -282,7 +283,7 @@ class Client:
     async def login_with_username_and_password(self, username, password):
         from ilmsdump import captcha
 
-        async with self.session.get('https://lms.nthu.edu.tw/login_page.php') as response:
+        async with self.session.get(f'{TARGET_ORIGIN}/login_page.php') as response:
             await response.read()
 
         async with captcha.request(self.session) as response:
@@ -310,7 +311,7 @@ class Client:
     async def login_with_phpsessid(self, phpsessid):
         self.session.cookie_jar.update_cookies(
             {'PHPSESSID': phpsessid},
-            response_url=yarl.URL(DOMAIN),
+            response_url=yarl.URL(LOGIN_DOMAIN),
         )
         name = await self.get_login_state()
         if name is None:
@@ -338,12 +339,13 @@ class Client:
 
     async def get_course(self, course_id: int) -> 'Course':
         async with self.session.get(
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'courseID': course_id,
                 'f': 'syllabus',
             },
         ) as response:
+            print(response.url)
             if response.url.path == '/course_login.php':
                 raise UserError(f'No access to course: course_id={course_id}')
 
@@ -415,7 +417,7 @@ class Client:
         while page <= total_pages:
             print(end=f'\rIndexing open courses: page {page} of {total_pages}', file=sys.stderr)
             async with self.session.get(
-                'https://lms.nthu.edu.tw/course/index.php',
+                f'{TARGET_ORIGIN}/course/index.php',
                 params={
                     'nav': 'course',
                     't': 'open',
@@ -701,7 +703,7 @@ class Course(Downloadable):
 
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'courseID': self.id,
                 'f': 'syllabus',
@@ -717,7 +719,7 @@ class Course(Downloadable):
         for page in itertools.count(page):
             async with client.request(
                 'GET',
-                'https://lms.nthu.edu.tw/course.php',
+                f'{TARGET_ORIGIN}/course.php',
                 params={
                     'courseID': self.id,
                     'f': f,
@@ -790,7 +792,7 @@ class Course(Downloadable):
     async def get_scores(self, client) -> AsyncGenerator['Score', None]:
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'f': 'score',
                 'courseID': self.id,
@@ -805,7 +807,7 @@ class Course(Downloadable):
     async def get_grouplists(self, client) -> AsyncGenerator['GroupList', None]:
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'f': 'grouplist',
                 'courseID': self.id,
@@ -828,8 +830,8 @@ class Announcement(Downloadable):
 
     async def download(self, client: Client):
         async with client.request(
-            'POST',
-            'https://lms.nthu.edu.tw/home/http_event_select.php',
+            'GET',
+            f'{TARGET_ORIGIN}/home/http_event_select.php',
             params={
                 'id': self.id,
                 'type': 'n',
@@ -863,7 +865,7 @@ class Material(Downloadable):
     async def download(self, client: Client):
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'courseID': self.course.id,
                 'f': 'doc',
@@ -887,7 +889,7 @@ class Material(Downloadable):
     async def get_video(self, client: Client, base_url: yarl.URL) -> Union[None, 'Video']:
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/sys/http_get_media.php',
+            f'{TARGET_ORIGIN}/sys/http_get_media.php',
             params={
                 'id': self.id,
                 'db_table': 'content',
@@ -921,9 +923,9 @@ class Discussion(Downloadable):
 
     async def download(self, client: Client):
         async with client.request(
-            'POST',
-            'https://lms.nthu.edu.tw/sys/lib/ajax/post.php',
-            data={
+            'GET',
+            f'{TARGET_ORIGIN}/sys/lib/ajax/post.php',
+            params={
                 'id': self.id,
             },
         ) as response:
@@ -957,7 +959,7 @@ class Homework(Downloadable):
         # homework description
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'courseID': self.course.id,
                 'f': 'hw',
@@ -978,7 +980,7 @@ class Homework(Downloadable):
         # submitted homework
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'courseID': self.course.id,
                 'f': 'hw_doclist',
@@ -1052,7 +1054,7 @@ class SubmittedHomework(Downloadable):
     async def download(self, client: Client):
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'courseID': self.course.id,
                 'f': 'doc',
@@ -1088,7 +1090,7 @@ class SinglePageDownloadable(Downloadable):
     async def download(self, client: Client):
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/course.php',
+            f'{TARGET_ORIGIN}/course.php',
             params={
                 'courseID': self.course.id,
                 **self.extra_params,
@@ -1129,7 +1131,7 @@ class Attachment(Downloadable):
     async def download(self, client):
         async with client.request(
             'GET',
-            'https://lms.nthu.edu.tw/sys/read_attach.php',
+            f'{TARGET_ORIGIN}/sys/read_attach.php',
             params={
                 'id': self.id,
             },
