@@ -2,7 +2,7 @@
 
 ![Test](https://github.com/afq984/ilmsdump/workflows/Test/badge.svg) ![Lint](https://github.com/afq984/ilmsdump/workflows/Lint/badge.svg) [![codecov](https://codecov.io/gh/afq984/ilmsdump/branch/main/graph/badge.svg?token=56G2HHFE73)](https://codecov.io/gh/afq984/ilmsdump)
 
-[Online demo](https://ilmsdump.afq984.net)
+[Online demo](https://ilmsdump.afq984.org) of open courses
 
 ## Installation
 
@@ -69,6 +69,10 @@ ilmsdump --help
 ```
 
 ### 查看匯出的課程
+
+使用 [ilmsfreeze](https://ilmsfreeze.afq984.org) 開啟下載的資料夾
+
+Or
 
 ```
 ilmsserve
