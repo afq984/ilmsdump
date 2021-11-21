@@ -10,6 +10,7 @@ import aiohttp_jinja2
 import click
 import jinja2
 import lxml.html
+import markupsafe
 import yarl
 from aiohttp import web
 
@@ -40,7 +41,7 @@ class Object:
 
     def embed(self, filename):
         with self.open(filename) as file:
-            return jinja2.Markup(file.read())
+            return markupsafe.Markup(file.read())
 
     @functools.cached_property
     def children(self):
@@ -142,13 +143,13 @@ COURSE_MENU_ITEMS = [
 @object.__new__
 class fa:
     def __getitem__(self, name):
-        return jinja2.Markup('<span class="icon"><i class="fas fa-{}"></i></span>').format(name)
+        return markupsafe.Markup('<span class="icon"><i class="fas fa-{}"></i></span>').format(name)
 
 
 @dataclasses.dataclass
 class PathFrag:
     url: str
-    text: Union[str, jinja2.Markup]
+    text: Union[str, markupsafe.Markup]
 
 
 PATH_FRAG_HOME = PathFrag('/', fa['home'])
